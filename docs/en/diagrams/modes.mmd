@@ -1,0 +1,17 @@
+stateDiagram-v2
+  [*] --> Idle: power on (all relays off, valve open)
+  Idle --> Manual: any single command (n, t, y, p, v, x ...)
+  Manual --> Manual: toggle burner, drum, blower, cooler, valve
+  Idle --> Heating: h
+  Manual --> Heating: h
+  Heating --> Idle: 600 s elapsed, sends V
+  Heating --> Idle: s
+  Idle --> Pid: q
+  Manual --> Pid: q
+  Pid --> Pid: set point 150 C until a profile arrives
+  Pid --> Profile: 10 values received
+  Profile --> Profile: next set point every ~4 s
+  Profile --> Cooling: set point = 0, sends X
+  Pid --> Idle: s or bean >= 250 C, sends X
+  Profile --> Idle: s or bean >= 250 C, sends X
+  Cooling --> Idle: operator stops cooler (c)

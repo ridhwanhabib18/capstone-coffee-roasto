@@ -1,0 +1,14 @@
+flowchart LR
+  operator([Operator])
+
+  gui["<b>Coffee Roasto GUI</b><br/>Windows Forms app<br/>Monitor, record, control"]
+  fw["<b>Arduino firmware</b><br/>Sensor sampling, PID,<br/>relay and valve control"]
+  roaster["Roaster hardware<br/>Burner, drum motor, blower,<br/>cooler, gas valve, thermocouples"]
+  excel["Excel files<br/>Reference profile in,<br/>recorded data out"]
+
+  operator --> gui
+  gui <-->|USB serial, 9600 baud| fw
+  fw --> roaster
+  roaster -->|bean and drum temperature| fw
+  excel -->|ExcelDataReader| gui
+  gui -->|Excel Interop| excel

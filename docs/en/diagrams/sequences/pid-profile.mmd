@@ -1,0 +1,25 @@
+sequenceDiagram
+  actor Op as Operator
+  participant GUI as Coffee Roasto GUI
+  participant FW as Arduino firmware
+
+  Op->>GUI: PID MODE ON
+  GUI->>FW: "q"
+  Note over FW: drum motor + blower on, cooler off, set point 150 C
+  Op->>GUI: BROWSE, pick sheet, START
+  loop each group of 10 rows
+    GUI->>FW: "t1,t2,...,t10\n"
+    Note over FW: split on commas, copy to the working buffer
+    FW->>FW: one set point every ~4 s (10 values = ~40 s)
+    GUI->>GUI: wait 40 s
+  end
+  Note over FW: PID = Kp*e + Ki*e + e, clamped 0..40
+  FW->>FW: servo = 40 - PID; burner on at 40, off at 0
+  FW-->>GUI: "Y" / "Z" burner lamp events
+  alt profile ends (empty value = set point 0)
+    FW-->>GUI: "X" roasting done
+    FW->>FW: burner off, blower off, drum on, cooler on
+  else operator presses OFF or bean >= 250 C
+    GUI->>FW: "s"
+    FW-->>GUI: "X"
+  end

@@ -1,0 +1,19 @@
+sequenceDiagram
+  actor Op as Operator
+  participant GUI as Coffee Roasto GUI
+  participant FW as Arduino firmware
+  participant TC as MAX6675 x2
+
+  Op->>GUI: Pick COM port, press CONNECT
+  GUI->>FW: open port 9600, send "#"
+  Note over FW: "#" is not a command, so it is read as set point 0 (clears old state)
+  loop every 1 s
+    FW->>TC: readCelsius()
+  end
+  Note over FW: after 4 samples: average, calibrate, 0.25 C dead band
+  FW-->>GUI: @37.11A38.67B0C
+  GUI->>GUI: parse, divide by 100, BeginInvoke(Show_DataTempChart)
+  GUI-->>Op: labels and chart updated
+  opt recording is on
+    GUI->>GUI: add Coffee(bean, drum) to the list
+  end

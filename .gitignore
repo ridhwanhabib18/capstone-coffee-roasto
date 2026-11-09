@@ -1,0 +1,17 @@
+# Local-only material moved out of the project tree
+archive/
+
+# Visual Studio / build output
+.vs/
+bin/
+obj/
+packages/
+*.user
+UpgradeLog*.htm
+
+# Signing key and Excel lock files
+*.pfx
+~$*
+
+# Archives
+*.rar
