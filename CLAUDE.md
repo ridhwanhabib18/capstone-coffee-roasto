@@ -16,6 +16,7 @@ If code and docs disagree, stop and ask. Never invent requirements that are not 
 - This controls a gas burner. Never change a safety rule (250 °C stop, burner off on `s`, relay idle = HIGH) without
   asking, and say in the summary how the change was tested (burner disconnected first).
 - Do not add NuGet packages or Arduino libraries without approval; check the license.
+- GitHub: this repo always uses the account `ridhwanhabib18` (`ridhwanhabib18/capstone-coffee-roasto`). Before any push or `gh` call run `gh auth status`; if another account is active, `gh auth switch --user ridhwanhabib18`. Never use `habibepson`.
 - Do not commit `bin/`, `obj/`, `.vs/`, `packages/`, `*.pfx` or the Excel lock files (`~$*.xlsx`).
 
 ## Stack
