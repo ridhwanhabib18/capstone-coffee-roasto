@@ -134,7 +134,7 @@ sequenceDiagram
     GUI->>GUI: wait 40 s
   end
   Note over FW: PID = Kp*e + Ki*e + e, clamped 0..40
-  FW->>FW: servo = 40 - PID; burner on at 40, off at 0
+  FW->>FW: servo = 40 - PID, burner on at 40 and off at 0
   FW-->>GUI: "Y" / "Z" burner lamp events
   alt profile ends (empty value = set point 0)
     FW-->>GUI: "X" roasting done
