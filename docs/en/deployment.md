@@ -60,6 +60,7 @@ An `.xls` or `.xlsx` workbook; every sheet that has a header cell exactly `beant
 | Buttons react after about a second | Commands have no newline, the firmware waits for its read timeout | Expected (system design, limitation 4) |
 | AUTO MODE does nothing | The firmware has no handler for `m` | Use PID MODE |
 | Chart empty after START of a profile | PID mode was not on | Press PID MODE ON first |
+| Build error MSB3482 "Failed to sign ... app.publish" | The ClickOnce signing certificate (`gui/CoffeeRoasto_GUI_TemporaryKey.pfx`, not in git) is not in the Windows certificate store | Build with `-p:SignManifests=false`, or in Visual Studio open Project → Properties → Signing and create a new test certificate |
 | EXPORT fails | Excel not installed | Install Excel, or copy the data table by hand |
 | "Roasting Selesai" right after pressing heating OFF | Message is shown on the button press | Expected (limitation 7) |
 

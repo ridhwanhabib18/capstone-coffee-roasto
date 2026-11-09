@@ -60,6 +60,7 @@ Workbook `.xls` atau `.xlsx`; setiap sheet yang punya sel header persis `beantem
 | Tombol bereaksi setelah sekitar sedetik | Perintah tanpa newline, firmware menunggu timeout baca | Wajar (desain sistem, keterbatasan 4) |
 | AUTO MODE tidak berbuat apa-apa | Firmware tidak punya handler `m` | Pakai PID MODE |
 | Grafik kosong setelah START profil | Mode PID belum aktif | Tekan PID MODE ON lebih dulu |
+| Error build MSB3482 "Failed to sign ... app.publish" | Sertifikat penandatanganan ClickOnce (`gui/CoffeeRoasto_GUI_TemporaryKey.pfx`, tidak ada di git) belum ada di certificate store Windows | Build dengan `-p:SignManifests=false`, atau di Visual Studio buka Project → Properties → Signing dan buat sertifikat uji baru |
 | EXPORT gagal | Excel tidak terpasang | Pasang Excel, atau salin tabel data manual |
 | "Roasting Selesai" langsung setelah heating OFF | Pesan ditampilkan saat tombol ditekan | Wajar (keterbatasan 7) |
 
