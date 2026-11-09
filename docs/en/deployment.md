@@ -12,7 +12,7 @@ How to build the GUI, flash the firmware and run a roast. The design behind it i
 ## Steps
 
 ### 1. Flash the firmware
-1. Open `firmware/Program_PID_CP/Program_PID_CP.ino`. The two other `.ino` files in that folder (`read_temperature`, `pisahkansuhuref`) open as tabs of the same sketch.
+1. Open `firmware/Program_PID_CP/Program_PID_CP.ino`. The other `.ino` files and the `.h` files in that folder open as tabs of the same sketch. To only check that it compiles: `arduino-cli compile --fqbn arduino:avr:uno firmware/Program_PID_CP`.
 2. Select the board and port, then Upload.
 3. Open the serial monitor at 9600 baud. After a few seconds a frame like `@37.11A38.67B0C` should appear every ~4 s. Close the monitor before starting the GUI (only one program can hold the port).
 

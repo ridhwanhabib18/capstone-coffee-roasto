@@ -12,7 +12,7 @@ flowchart TB
 
   subgraph board["Arduino"]
     parser["Command parser<br/>one character per command"]
-    sampler["read_temperature()<br/>4 samples, average, calibrate"]
+    sampler["readTemperature()<br/>4 samples, average, calibrate"]
     pid["PID loop<br/>q (auto), h (heating)"]
     outputs["Relays: burner, drum motor,<br/>blower, cooler<br/>Servo: gas valve"]
     max["2 x MAX6675"]

@@ -18,7 +18,7 @@ bila perubahan di bawah 0,25 °C.
 
 ## Konsekuensi
 Mengganti probe atau penguat butuh regresi baru. PID hanya melihat pembacaan tiap ~4 detik, jadi tiap baris profil
-adalah satu langkah 4 detik. Koefisien sebelumnya disimpan sebagai komentar di `read_temperature.ino`.
+adalah satu langkah 4 detik. Konstanta ada di `Config.h`; koefisien sebelumnya (biji = (T + 0,9845) / 0,9655, drum = (T − 3,6176) / 0,8963) ada di riwayat git.
 
 ## Alternatif yang ditolak
 - Pembacaan mentah: terlalu berderau untuk kontroler.

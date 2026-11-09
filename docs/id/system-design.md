@@ -48,9 +48,14 @@ GUI adalah satu layar (`Form_CoffeeRoasto`, dipecah menjadi beberapa file partia
 | `UI/TemperatureChart.cs` | `TemperatureChart` | Grafik dan ketiga serinya |
 | `UI/RoastClock.cs` | `RoastClock` | Sumbu waktu (mm:ss sejak connect atau mode dimulai) |
 | `Program.cs` | `Program` | Titik masuk |
-| firmware `Program_PID_CP.ino` | | Parser perintah, PID, output relay dan servo |
-| firmware `read_temperature.ino` | | Pembacaan termokopel, rata-rata, kalibrasi, frame data |
-| firmware `pisahkansuhuref.ino` | | Memecah baris profil dipisah koma |
+| firmware `Program_PID_CP.ino` | | `setup()` dan `loop()`: baca perintah, baca sensor, arahkan ke mode |
+| firmware `Config.h`, `Commands.h`, `Globals.h` | | Pin dan batas, karakter protokol, objek bersama |
+| firmware `Actuators.ino` | | Relay, servo valve, pengalihan kompor oleh keluaran PID |
+| firmware `TemperatureSensors.ino` | | Sampling, rata-rata, kalibrasi, dead band, frame data |
+| firmware `Pid.ino` | | Perhitungan PID |
+| firmware `ReferenceProfile.h` | `ReferenceProfile` | Kelompok sepuluh set point yang menunggu dan yang aktif |
+| firmware `ManualMode.ino` | | Satu perintah per output, set point ketikan, penahan kompor manual |
+| firmware `PidMode.ino`, `HeatingMode.ino` | | Dua loop yang berjalan sampai selesai, dihentikan, atau suhu berlebih |
 
 Ketergantungan searah: `Form1.*` memakai `Hardware`, `Profiles`, `Recording`, dan `UI`; `Profiles` memakai `Hardware`. `Hardware`, `Profiles`, dan `Recording` tidak merujuk ke form.
 
@@ -100,7 +105,7 @@ Titik-titik di mana kode dan maksudnya berbeda. Daftar ini agar tidak ada yang t
 
 | # | Area | Pengamatan | Dampak |
 | --- | --- | --- | --- |
-| 1 | PID firmware | `errorx` tidak pernah diperbarui dan `kd` (30) tidak dipakai; integral = `ki·e` dan turunan = `e` | Berperilaku seperti P + I kecil + P tambahan; gain MATLAB belum sepenuhnya berlaku |
+| 1 | PID firmware | `PREVIOUS_ERROR` tetap 0 dan `KD` (30) tidak dipakai; integral = `KI·e` dan turunan = `e` | Berperilaku seperti P + I kecil + P tambahan; gain MATLAB belum sepenuhnya berlaku |
 | 2 | Parsing GUI | `Convert.ToDouble(...) / 100` bergantung pada lokal PC | Nilai salah di PC berlokal Inggris |
 | 3 | Auto mode `m` | GUI mengirim `m` tetapi firmware tidak punya handler | AUTO MODE ON tidak berguna; pakai PID MODE |
 | 4 | Framing serial | GUI `Write("n")` tanpa newline, firmware menunggu `\n` | Perintah tiba setelah timeout `readStringUntil` 1 detik |
@@ -111,3 +116,4 @@ Titik-titik di mana kode dan maksudnya berbeda. Daftar ini agar tidak ada yang t
 | 9 | `moveServo.ino` | Tidak bisa dikompilasi | Tidak dipakai firmware |
 | 10 | Repositori | `bin/`, `obj/`, `.vs/`, `packages/`, `Release.rar`, dan kunci penandatanganan ada di pohon | Repositori besar; jangan masukkan ke version control |
 | 11 | Ekspor | `Excel Interop` butuh Excel terpasang (baris terakhir yang terlewat sudah **diperbaiki**) | Gagal di PC tanpa Excel |
+| 12 | Akhir profil | Tanpa baris baru firmware memakai ulang kelompok sepuluh terakhir, dan hanya nilai kosong yang mengakhiri roasting | Profil dengan jumlah baris kelipatan sepuluh tidak berakhir sendiri; tekan OFF atau tunggu 250 °C |

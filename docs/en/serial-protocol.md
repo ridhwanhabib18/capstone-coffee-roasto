@@ -41,9 +41,9 @@ The contract between the Coffee Roasto GUI (`Form1.cs`) and the Arduino firmware
 
 | Field | Meaning | Source |
 | --- | --- | --- |
-| `<bean>` | Bean temperature, calibrated, °C | `thermocouple2` (CS 7) |
-| `<drum>` | Drum temperature, calibrated, °C | `thermocouple1` (CS 4) |
-| `<reference>` | Current set point, °C; `0` when none | `suhu_ref_saatini` |
+| `<bean>` | Bean temperature, calibrated, °C | `beanSensor` (CS 7) |
+| `<drum>` | Drum temperature, calibrated, °C | `drumSensor` (CS 4) |
+| `<reference>` | Current set point, °C; `0` when none | `roaster.setpoint` |
 
 One frame is sent per averaged reading: 4 samples at 1 s each, so **one frame every ~4 s**. The GUI finds the markers `@`, `A`, `B`, `C` with `IndexOf`, converts each field with `Convert.ToDouble(...) / 100` (see the decimal-separator note below) and plots it. A frame with a missing marker is ignored.
 
@@ -60,7 +60,7 @@ One frame is sent per averaged reading: 4 samples at 1 s each, so **one frame ev
 
 ## 3. Profile transfer
 
-The GUI reads the sheet column `beantemperature`, walks the rows and builds groups of ten values separated by commas. After each group of ten it waits **40 s** (10 values × ~4 s per set point) so the firmware does not run out of set points; a shorter last group is sent at the end. The firmware splits the line with `pisahkansuhuref()` into `Array_suhu[0..9]`, copies it to a working buffer when the previous group is used up, and advances one set point per averaged reading. An empty value converts to `0`, and a set point of `0` ends the roast (`X`).
+The GUI reads the sheet column `beantemperature`, walks the rows and builds groups of ten values separated by commas. After each group of ten it waits **40 s** (10 values × ~4 s per set point) so the firmware does not run out of set points; a shorter last group is sent at the end. The firmware (`ReferenceProfile.h`) splits the line on commas into a pending group of ten, makes it the active group when the previous one is used up, and advances one set point per averaged reading. If no new line has arrived, the same group is used again, so a profile whose length is a multiple of ten never ends by itself (known limitation 12). An empty value converts to `0`, and a set point of `0` ends the roast (`X`).
 
 Start PID mode (`q`) **before** pressing START: the profile is only read inside the PID loop.
 

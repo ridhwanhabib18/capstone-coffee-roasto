@@ -89,15 +89,15 @@ Each item names the control it belongs to.
 
 ## 6. Glossary
 
-| Indonesian (code) | English |
+| Indonesian (original code) | English (current code) |
 | --- | --- |
-| kompor | burner |
-| motorDC | drum motor |
+| kompor | burner (`PIN_BURNER`, `setBurner`) |
+| motorDC | drum motor (`PIN_DRUM_MOTOR`) |
 | suhu | temperature |
 | suhu referensi | reference temperature / set point |
 | pemanasan | heating |
 | biji | bean |
-| waktu_ref | heating time (600 s) |
+| waktu_ref | heating time, 600 s (`HEATING_DURATION_S`) |
 | Pengujian Hardware | hardware test |
 | Data Suhu Referensi | reference temperature data |
 

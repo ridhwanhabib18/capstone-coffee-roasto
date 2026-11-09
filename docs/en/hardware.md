@@ -2,14 +2,14 @@
 
 Nov 9, 2026 · @M Ridhwan Habib A
 
-What the firmware expects to find on the roaster. Pin numbers are the ones in `Program_PID_CP.ino`; check them against your wiring before powering the burner.
+What the firmware expects to find on the roaster. Pin numbers are the ones in `Config.h` of the firmware; check them against your wiring before powering the burner.
 
 ## Bill of materials
 | Part | Role |
 | --- | --- |
 | Arduino (AVR, USB serial) | Runs the firmware |
 | 2 × MAX6675 + K-type thermocouple | Drum and bean temperature (12-bit, 0.25 °C resolution) |
-| 4 × relay channel | Burner (`kompor`), drum motor, blower, cooler |
+| 4 × relay channel | Burner, drum motor, blower, cooler |
 | Hobby servo | Moves the gas valve between open and closed |
 | Gas burner with valve | Heat source |
 | PC with a USB port | Runs the GUI |
@@ -17,19 +17,19 @@ What the firmware expects to find on the roaster. Pin numbers are the ones in `P
 ## Pin map
 | Signal | Arduino pin | Notes |
 | --- | --- | --- |
-| Burner relay (`kompor`) | 9 | Active LOW; the sketch tests it as a 5 Hz-class SSR switch |
-| Cooler relay | 10 | Active LOW |
-| Servo (gas valve) | 11 | 0° = fully open, 40° = fully closed |
-| Drum motor relay (`motorDC`) | 12 | Active LOW |
-| Blower relay | 13 | Active LOW |
-| Drum thermocouple (MAX6675 #1) | DO 3, CS 4, CLK 5 | `thermocouple1` |
-| Bean thermocouple (MAX6675 #2) | DO 6, CS 7, CLK 8 | `thermocouple2` |
+| Burner relay (`PIN_BURNER`) | 9 | Active LOW; the sketch tests it as a 5 Hz-class SSR switch |
+| Cooler relay (`PIN_COOLER`) | 10 | Active LOW |
+| Servo, gas valve (`PIN_VALVE_SERVO`) | 11 | 0° = fully open, 40° = fully closed |
+| Drum motor relay (`PIN_DRUM_MOTOR`) | 12 | Active LOW |
+| Blower relay (`PIN_BLOWER`) | 13 | Active LOW |
+| Drum thermocouple (MAX6675 #1) | DO 3, CS 4, CLK 5 | `drumSensor` |
+| Bean thermocouple (MAX6675 #2) | DO 6, CS 7, CLK 8 | `beanSensor` |
 
 All relays are **active LOW**: `HIGH` is off and the pins are set `HIGH` in `setup()`, so a reset leaves everything off and the valve open.
 
 ## Temperature chain
-1. `read_temperature()` reads both sensors every 1 s (`interval1`).
-2. After `banyak_sampling` = 4 readings it averages them.
+1. `readTemperature()` (`TemperatureSensors.ino`) reads both sensors every 1 s (`SAMPLE_INTERVAL_MS`).
+2. After `SAMPLES_PER_READING` = 4 readings it averages them.
 3. A linear-regression correction is applied: bean = (T₂ − 3.4921) / 0.9194 and drum = (T₁ − 6.8969) / 0.8711. The commented-out lines show the earlier coefficients.
 4. A change smaller than 0.25 °C (the MAX6675 resolution) is ignored to reduce flicker.
 5. The result is printed as a data frame (see the [serial protocol](serial-protocol.md)).

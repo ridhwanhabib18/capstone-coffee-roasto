@@ -18,7 +18,7 @@ change is below 0.25 °C.
 
 ## Consequences
 Replacing a probe or amplifier requires a new regression. The PID sees a reading only every ~4 s, so each profile
-row is one 4 s step. The earlier coefficients are kept as comments in `read_temperature.ino`.
+row is one 4 s step. The constants are in `Config.h`; the earlier coefficients (bean = (T + 0.9845) / 0.9655, drum = (T − 3.6176) / 0.8963) are in the git history.
 
 ## Rejected alternatives
 - Raw readings: too noisy for the controller.

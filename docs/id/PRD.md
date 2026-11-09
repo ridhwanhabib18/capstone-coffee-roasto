@@ -87,15 +87,15 @@ Ini versi bahasa Indonesia; versi Inggris adalah rujukan utama dan diperbarui be
 
 ## 6. Glosarium
 
-| Indonesia (kode) | Inggris |
+| Indonesia (kode asli) | Inggris (kode sekarang) |
 | --- | --- |
-| kompor | burner |
-| motorDC | drum motor |
+| kompor | burner (`PIN_BURNER`, `setBurner`) |
+| motorDC | drum motor (`PIN_DRUM_MOTOR`) |
 | suhu | temperature |
 | suhu referensi | reference temperature / set point |
 | pemanasan | heating |
 | biji | bean |
-| waktu_ref | waktu heating (600 detik) |
+| waktu_ref | waktu heating, 600 detik (`HEATING_DURATION_S`) |
 | Pengujian Hardware | hardware test |
 | Data Suhu Referensi | reference temperature data |
 

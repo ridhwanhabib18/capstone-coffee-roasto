@@ -57,7 +57,7 @@ flowchart TB
 
   subgraph board["Arduino"]
     parser["Command parser<br/>one character per command"]
-    sampler["read_temperature()<br/>4 samples, average, calibrate"]
+    sampler["readTemperature()<br/>4 samples, average, calibrate"]
     pid["PID loop<br/>q (auto), h (heating)"]
     outputs["Relays: burner, drum motor,<br/>blower, cooler<br/>Servo: gas valve"]
     max["2 x MAX6675"]
@@ -102,9 +102,14 @@ The GUI is one screen (`Form_CoffeeRoasto`, split over several partial files) an
 | `UI/TemperatureChart.cs` | `TemperatureChart` | The chart and its three series |
 | `UI/RoastClock.cs` | `RoastClock` | The time axis (mm:ss since connect or mode start) |
 | `Program.cs` | `Program` | Entry point |
-| firmware `Program_PID_CP.ino` | | Command parser, PID, relay and servo outputs |
-| firmware `read_temperature.ino` | | Thermocouple reading, averaging, calibration, data frame |
-| firmware `pisahkansuhuref.ino` | | Splits a comma-separated profile line |
+| firmware `Program_PID_CP.ino` | | `setup()` and `loop()`: read a command, read the sensors, dispatch to a mode |
+| firmware `Config.h`, `Commands.h`, `Globals.h` | | Pins and limits, protocol characters, shared objects |
+| firmware `Actuators.ino` | | Relays, valve servo, burner switching by PID output |
+| firmware `TemperatureSensors.ino` | | Sampling, averaging, calibration, dead band, the data frame |
+| firmware `Pid.ino` | | The PID calculation |
+| firmware `ReferenceProfile.h` | `ReferenceProfile` | Pending and active groups of ten set points |
+| firmware `ManualMode.ino` | | One command per output, typed set point, manual burner hold |
+| firmware `PidMode.ino`, `HeatingMode.ino` | | The two loops that run until done, stopped or over-temperature |
 
 Dependencies point one way: `Form1.*` uses `Hardware`, `Profiles`, `Recording` and `UI`; `Profiles` uses `Hardware`. `Hardware`, `Profiles` and `Recording` do not reference the form.
 
@@ -221,7 +226,7 @@ These are the points where the code and the intent differ. They are listed so no
 
 | # | Area | Observation | Effect |
 | --- | --- | --- | --- |
-| 1 | Firmware PID | `errorx` is never updated and `kd` (30) is never used; the integral is `ki·e` and the derivative term is `e` | Behaves as P + small I + extra P; the MATLAB gains are not fully applied |
+| 1 | Firmware PID | `PREVIOUS_ERROR` stays 0 and `KD` (30) is never used; the integral is `KI·e` and the derivative term is `e` | Behaves as P + small I + extra P; the MATLAB gains are not fully applied |
 | 2 | GUI parsing | `Convert.ToDouble(...) / 100` depends on the PC culture | Wrong values on an English-culture PC |
 | 3 | Auto mode `m` | The GUI sends `m` but the firmware has no handler | AUTO MODE ON does nothing useful; use PID MODE |
 | 4 | Serial framing | GUI `Write("n")` has no newline, firmware waits for `\n` | Commands arrive after the 1 s `readStringUntil` timeout |
@@ -232,3 +237,4 @@ These are the points where the code and the intent differ. They are listed so no
 | 9 | `moveServo.ino` | Does not compile | Not used by the firmware |
 | 10 | Repository | `bin/`, `obj/`, `.vs/`, `packages/`, `Release.rar` and a signing key are in the tree | Large repository; keep out of version control |
 | 11 | Export | `Excel Interop` needs Excel installed (the skipped last row is **fixed**) | Fails on a PC without Excel |
+| 12 | Profile end | With no new line the firmware reuses the last group of ten, and only an empty value ends the roast | A profile with a multiple of ten rows never ends by itself; press OFF or wait for 250 °C |

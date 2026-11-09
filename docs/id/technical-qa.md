@@ -43,7 +43,7 @@ Ada beberapa lapis: relay default mati, batas 250 °C, perintah `s`, dan berakhi
 `UpgradeLog*.htm` adalah laporan upgrade proyek Visual Studio, `Release.rar` adalah arsip build, dan `CoffeeRoasto_GUI_TemporaryKey.pfx` adalah sertifikat sementara yang dibuat Visual Studio untuk penandatanganan ClickOnce. Tidak ada yang dibutuhkan untuk build; `.gitignore` proyek sudah mengecualikan hasil build.
 
 ## 11. Apa perbaikan berikutnya?
-- Perbaiki PID (perbarui `errorx`, pakai Kd) dan tuning ulang di mesin
+- Perbaiki PID (pakai error sebelumnya yang sebenarnya dan `KD`) dan tuning ulang di mesin
 - Parse dengan invariant culture dan hapus pembagian
 - Tambahkan newline pada tiap perintah, atau ganti firmware ke `Serial.read()`
 - Alihkan semua pembaruan lampu dan pesan ke thread UI

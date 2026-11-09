@@ -41,9 +41,9 @@ Kontrak antara GUI Coffee Roasto (`Form1.cs`) dan firmware Arduino (`Program_PID
 
 | Field | Arti | Sumber |
 | --- | --- | --- |
-| `<bean>` | Suhu biji, terkalibrasi, °C | `thermocouple2` (CS 7) |
-| `<drum>` | Suhu drum, terkalibrasi, °C | `thermocouple1` (CS 4) |
-| `<reference>` | Set point saat ini, °C; `0` bila tidak ada | `suhu_ref_saatini` |
+| `<bean>` | Suhu biji, terkalibrasi, °C | `beanSensor` (CS 7) |
+| `<drum>` | Suhu drum, terkalibrasi, °C | `drumSensor` (CS 4) |
+| `<reference>` | Set point saat ini, °C; `0` bila tidak ada | `roaster.setpoint` |
 
 Satu frame dikirim per pembacaan rata-rata: 4 sampel tiap 1 detik, jadi **satu frame tiap ~4 detik**. GUI mencari penanda `@`, `A`, `B`, `C` dengan `IndexOf`, mengubah tiap field dengan `Convert.ToDouble(...) / 100` (lihat catatan pemisah desimal) lalu memplotnya. Frame yang penandanya kurang diabaikan.
 
@@ -60,7 +60,7 @@ Satu frame dikirim per pembacaan rata-rata: 4 sampel tiap 1 detik, jadi **satu f
 
 ## 3. Pengiriman profil
 
-GUI membaca kolom `beantemperature` dari sheet, menelusuri baris, dan membentuk kelompok sepuluh nilai dipisah koma. Setelah tiap kelompok sepuluh, GUI menunggu **40 detik** (10 nilai × ~4 detik per set point) agar firmware tidak kehabisan set point; kelompok terakhir yang lebih pendek dikirim di akhir. Firmware memecah baris dengan `pisahkansuhuref()` ke `Array_suhu[0..9]`, menyalinnya ke buffer kerja saat kelompok sebelumnya habis, dan maju satu set point per pembacaan rata-rata. Nilai kosong menjadi `0`, dan set point `0` mengakhiri roasting (`X`).
+GUI membaca kolom `beantemperature` dari sheet, menelusuri baris, dan membentuk kelompok sepuluh nilai dipisah koma. Setelah tiap kelompok sepuluh, GUI menunggu **40 detik** (10 nilai × ~4 detik per set point) agar firmware tidak kehabisan set point; kelompok terakhir yang lebih pendek dikirim di akhir. Firmware (`ReferenceProfile.h`) memecah baris pada koma menjadi satu kelompok sepuluh yang menunggu, menjadikannya kelompok aktif saat yang sebelumnya habis, dan maju satu set point per pembacaan rata-rata. Bila tidak ada baris baru, kelompok yang sama dipakai lagi, sehingga profil yang panjangnya kelipatan sepuluh tidak berakhir sendiri (keterbatasan 12). Nilai kosong menjadi `0`, dan set point `0` mengakhiri roasting (`X`).
 
 Aktifkan mode PID (`q`) **sebelum** menekan START: profil hanya dibaca di dalam loop PID.
 

@@ -25,6 +25,11 @@ GUI: C#, .NET Framework 4.7.2, Windows Forms, `System.Windows.Forms.DataVisualiz
 Firmware: Arduino (AVR), `max6675` and `Servo` libraries, 9600 baud.
 
 ## Architecture rules
+- Firmware (`firmware/Program_PID_CP/`): fixed values in `Config.h`, protocol characters in `Commands.h`, shared objects in
+  `Globals.h`; one tab per job (`Actuators`, `TemperatureSensors`, `Pid`, `ManualMode`, `PidMode`, `HeatingMode`,
+  `ReferenceProfile.h`). Every output goes through the functions in `Actuators.ino`, never a bare `digitalWrite`.
+- The refactored firmware was checked against the original with a host-side trace comparison (11 scenarios, no
+  differences). After changing firmware logic, compile with `arduino-cli` and re-test on the machine with the burner disconnected.
 - `Form_CoffeeRoasto` is the only screen, split into `Form1.cs` (setup, incoming data) and `Form1.<Area>.cs` partials
   (Connection, Manual, Modes, Recording, Profile). Handlers stay thin: send a command, set lamps.
 - Folders: `Hardware/` (serial link, commands, frame parser), `Profiles/` (Excel profile in, transmitter), `Recording/`
@@ -40,11 +45,12 @@ Firmware: Arduino (AVR), `max6675` and `Servo` libraries, 9600 baud.
 
 ## Language
 - Code identifiers and new comments in English; existing Indonesian comments may stay.
-- Keep the existing names (`kompor` = burner, `suhu` = temperature) in the firmware; the docs give the translation.
+- The firmware uses English names too (`PIN_BURNER`, `setBurner`, `roaster.setpoint`); the glossary in the PRD maps the old Indonesian ones (`kompor`, `suhu_ref_saatini`).
 - Docs exist in English (primary) and Indonesian; update both together.
 
 ## Commands
 - Build GUI: `nuget restore` then `msbuild "gui/CoffeeRoasto_GUI.sln" /p:Configuration=Release`
 - Run GUI: open the solution in Visual Studio and press F5, or run `bin/Release/CoffeeRoasto_GUI.exe`
 - Flash firmware: Arduino IDE, open `firmware/Program_PID_CP/Program_PID_CP.ino`, Upload
+- Compile-check firmware: `arduino-cli compile --fqbn arduino:avr:uno firmware/Program_PID_CP` (needs the `MAX6675 library` and `Servo` libraries)
 - There is no automated test suite; verify with the checklist in `docs/en/deployment.md`.

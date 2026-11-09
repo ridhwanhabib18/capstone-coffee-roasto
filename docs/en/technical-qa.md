@@ -43,7 +43,7 @@ It has several layers: relays default off, the 250 °C stop, the `s` command and
 `UpgradeLog*.htm` are Visual Studio project-upgrade reports, `Release.rar` is an archived build, and `CoffeeRoasto_GUI_TemporaryKey.pfx` is the temporary certificate Visual Studio creates for ClickOnce signing. None is needed to build; the `.gitignore` of the project already excludes build output.
 
 ## 11. What would be the next improvements?
-- Fix the PID (update `errorx`, use Kd) and re-tune on the machine
+- Fix the PID (use a real previous error and `KD`) and re-tune on the machine
 - Parse with the invariant culture and remove the division
 - Add a newline to every command, or switch the firmware to `Serial.read()`
 - Marshal all lamp and message updates to the UI thread

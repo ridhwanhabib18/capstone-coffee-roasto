@@ -12,7 +12,7 @@ Cara membangun GUI, mengunggah firmware, dan menjalankan satu proses roasting. D
 ## Langkah
 
 ### 1. Unggah firmware
-1. Buka `firmware/Program_PID_CP/Program_PID_CP.ino`. Dua file `.ino` lain di folder itu (`read_temperature`, `pisahkansuhuref`) terbuka sebagai tab sketsa yang sama.
+1. Buka `firmware/Program_PID_CP/Program_PID_CP.ino`. File `.ino` lain dan file `.h` di folder itu terbuka sebagai tab sketsa yang sama. Untuk sekadar memeriksa bisa dikompilasi: `arduino-cli compile --fqbn arduino:avr:uno firmware/Program_PID_CP`.
 2. Pilih board dan port, lalu Upload.
 3. Buka serial monitor 9600 baud. Setelah beberapa detik frame seperti `@37.11A38.67B0C` harus muncul tiap ~4 detik. Tutup monitor sebelum menjalankan GUI (hanya satu program yang bisa memegang port).
 
