@@ -55,7 +55,7 @@ Ini versi bahasa Indonesia; versi Inggris adalah rujukan utama dan diperbarui be
 - **FR-5** Label referensi menampilkan `....ºC` selama tidak ada set point aktif.
 
 ### 4.3 Kontrol manual
-- **FR-6** Burner, motor drum, blower drum, cooler: tombol ON dan OFF. Motor valve: OPEN dan CLOSE. *Terima:* tiap tekan mengirim karakter protokolnya dan mengubah lampu (lime = hidup, hijau tua = mati).
+- **FR-6** Burner, motor drum, blower drum, cooler: tombol ON dan OFF. Motor valve: OPEN dan CLOSE. *Terima:* tiap tekan mengirim karakter protokolnya dan mengubah lampu (hijau terang = hidup, hijau redup = mati).
 - **FR-7** Operator dapat mengetik suhu dan menekan SEND untuk memberi set point ke PID.
 
 ### 4.4 Mode heating

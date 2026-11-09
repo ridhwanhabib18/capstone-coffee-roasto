@@ -57,7 +57,7 @@ Each item names the control it belongs to.
 - **FR-5** The reference label shows `....ºC` while no set point is active.
 
 ### 4.3 Manual control
-- **FR-6** Burner, motor drum, blower drum, cooler: ON and OFF buttons. Motor valve: OPEN and CLOSE. *Accept:* each press sends its protocol character and changes the lamp (lime = on, dark green = off).
+- **FR-6** Burner, motor drum, blower drum, cooler: ON and OFF buttons. Motor valve: OPEN and CLOSE. *Accept:* each press sends its protocol character and changes the lamp (bright green = on, dim green = off).
 - **FR-7** The operator can type a temperature and press SEND to give the PID a set point.
 
 ### 4.4 Heating mode

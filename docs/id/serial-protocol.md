@@ -12,15 +12,15 @@ Kontrak antara GUI Coffee Roasto (`Form1.cs`) dan firmware Arduino (`Program_PID
 | --- | --- | --- | --- |
 | `#` | CONNECT | Bukan perintah; dibaca sebagai set point `0`. Menghapus referensi | — |
 | `n` | Burner ON | Relay kompor hidup, set point 0 | Burner hijau terang |
-| `k` | Burner OFF | Relay kompor mati, set point 0 | Burner hijau tua |
+| `k` | Burner OFF | Relay kompor mati, set point 0 | Burner hijau redup |
 | `t` | Motor drum ON | Motor drum hidup | Motor drum hijau terang |
-| `d` | Motor drum OFF | Motor drum mati | Motor drum hijau tua |
+| `d` | Motor drum OFF | Motor drum mati | Motor drum hijau redup |
 | `y` | Blower drum ON | Blower hidup | Blower hijau terang |
-| `b` | Blower drum OFF | Blower mati | Blower hijau tua |
+| `b` | Blower drum OFF | Blower mati | Blower hijau redup |
 | `p` | Cooler ON | Cooler hidup | Cooler hijau terang |
-| `c` | Cooler OFF | Cooler mati | Cooler hijau tua |
+| `c` | Cooler OFF | Cooler mati | Cooler hijau redup |
 | `v` | Motor valve OPEN | Servo ke 0° (valve terbuka penuh) | Valve hijau terang |
-| `x` | Motor valve CLOSE | Servo ke 40° (valve tertutup penuh) | Valve hijau tua |
+| `x` | Motor valve CLOSE | Servo ke 40° (valve tertutup penuh) | Valve hijau redup |
 | `h` | Heating mode ON | Loop heating: set point 150 °C selama 600 detik (bagian 4) | Heating, drum, blower, valve hijau terang |
 | `q` | PID mode ON | Loop PID dengan set point 150 °C sampai profil tiba (bagian 4) | PID, drum, blower, valve hijau terang |
 | `s` | OFF heating, PID, atau auto | Menghentikan loop yang berjalan, kompor mati | Lampu mode mati |
@@ -54,7 +54,7 @@ Satu frame dikirim per pembacaan rata-rata: 4 sampel tiap 1 detik, jadi **satu f
 | Baris | Arti | Reaksi GUI |
 | --- | --- | --- |
 | `Y` | Kompor dinyalakan oleh PID | Lampu burner hijau terang |
-| `Z` | Kompor dimatikan | Lampu burner hijau tua |
+| `Z` | Kompor dimatikan | Lampu burner hijau redup |
 | `X` | Roasting selesai (profil habis, `s`, atau biji ≥ 250 °C) | Pesan "Roasting Selesai"; lampu auto, blower, burner mati; lampu drum dan cooler hijau terang |
 | `V` | Heating selesai (600 detik) | Pesan "Heating Selesai"; lampu heating, blower, burner mati |
 

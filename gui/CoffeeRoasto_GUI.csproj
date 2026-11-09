@@ -111,6 +111,7 @@
     <Compile Include="Recording\ExcelExporter.cs" />
     <Compile Include="Recording\RecordingSession.cs" />
     <Compile Include="UI\LampBoard.cs" />
+    <Compile Include="UI\Palette.cs" />
     <Compile Include="UI\RoastClock.cs" />
     <Compile Include="UI\TemperatureChart.cs" />
     <Compile Include="Form1.cs">
@@ -126,6 +127,9 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="Form1.Profile.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Form1.Theme.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="Form1.Recording.cs">

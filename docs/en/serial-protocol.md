@@ -11,20 +11,20 @@ The contract between the Coffee Roasto GUI (`Form1.cs`) and the Arduino firmware
 | Char | Sent by (button) | Firmware action | Lamp in GUI |
 | --- | --- | --- | --- |
 | `#` | CONNECT | Not a command; read as set point `0`. Clears the reference | — |
-| `n` | Burner ON | Burner relay on, set point 0 | Burner lime |
-| `k` | Burner OFF | Burner relay off, set point 0 | Burner dark green |
-| `t` | Motor drum ON | Drum motor on | Motor drum lime |
-| `d` | Motor drum OFF | Drum motor off | Motor drum dark green |
-| `y` | Blower drum ON | Blower on | Blower lime |
-| `b` | Blower drum OFF | Blower off | Blower dark green |
-| `p` | Cooler ON | Cooler on | Cooler lime |
-| `c` | Cooler OFF | Cooler off | Cooler dark green |
-| `v` | Motor valve OPEN | Servo to 0° (valve fully open) | Valve lime |
-| `x` | Motor valve CLOSE | Servo to 40° (valve fully closed) | Valve dark green |
-| `h` | Heating mode ON | Heating loop: set point 150 °C for 600 s (section 4) | Heating, drum, blower, valve lime |
-| `q` | PID mode ON | PID loop with set point 150 °C until a profile arrives (section 4) | PID, drum, blower, valve lime |
+| `n` | Burner ON | Burner relay on, set point 0 | Burner bright green |
+| `k` | Burner OFF | Burner relay off, set point 0 | Burner dim green |
+| `t` | Motor drum ON | Drum motor on | Motor drum bright green |
+| `d` | Motor drum OFF | Drum motor off | Motor drum dim green |
+| `y` | Blower drum ON | Blower on | Blower bright green |
+| `b` | Blower drum OFF | Blower off | Blower dim green |
+| `p` | Cooler ON | Cooler on | Cooler bright green |
+| `c` | Cooler OFF | Cooler off | Cooler dim green |
+| `v` | Motor valve OPEN | Servo to 0° (valve fully open) | Valve bright green |
+| `x` | Motor valve CLOSE | Servo to 40° (valve fully closed) | Valve dim green |
+| `h` | Heating mode ON | Heating loop: set point 150 °C for 600 s (section 4) | Heating, drum, blower, valve bright green |
+| `q` | PID mode ON | PID loop with set point 150 °C until a profile arrives (section 4) | PID, drum, blower, valve bright green |
 | `s` | OFF of heating, PID or auto mode | Stops the running loop, burner off | Mode lamp off |
-| `m` | Auto mode ON | **No handler in this firmware**; read as set point `0` | Auto lime |
+| `m` | Auto mode ON | **No handler in this firmware**; read as set point `0` | Auto bright green |
 | `<number>` | INPUT TEMPERATURE + SEND | Any other text is parsed with `toFloat()` as the reference temperature (°C) | — |
 | `t1,t2,…,t10` | START of the file-based profile | Ten comma-separated set points, sent with `WriteLine` | — |
 
@@ -53,9 +53,9 @@ One frame is sent per averaged reading: 4 samples at 1 s each, so **one frame ev
 
 | Line | Meaning | GUI reaction |
 | --- | --- | --- |
-| `Y` | Burner switched on by the PID | Burner lamp lime |
-| `Z` | Burner switched off | Burner lamp dark green |
-| `X` | Roasting finished (profile ended, `s`, or bean ≥ 250 °C) | Message "Roasting Selesai"; auto, blower and burner lamps off; drum and cooler lamps lime |
+| `Y` | Burner switched on by the PID | Burner lamp bright green |
+| `Z` | Burner switched off | Burner lamp dim green |
+| `X` | Roasting finished (profile ended, `s`, or bean ≥ 250 °C) | Message "Roasting Selesai"; auto, blower and burner lamps off; drum and cooler lamps bright green |
 | `V` | Heating finished (600 s) | Message "Heating Selesai"; heating, blower, burner lamps off |
 
 ## 3. Profile transfer

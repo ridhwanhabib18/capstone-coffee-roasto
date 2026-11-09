@@ -89,6 +89,7 @@ The GUI is one screen (`Form_CoffeeRoasto`, split over several partial files) an
 | `Form1.Modes.cs` | (partial) | Heating, auto and PID start/stop and their lamps |
 | `Form1.Recording.cs` | (partial) | Record start/stop, export |
 | `Form1.Profile.cs` | (partial) | Browse a profile, choose a sheet, send it |
+| `Form1.Theme.cs` | (partial) | Colours, fonts, the header with the connection badge, the card behind the manual controls, chart and table styling; only appearance |
 | `Form1.Designer.cs` | (generated) | Controls and event wiring made by the Visual Studio designer |
 | `Hardware/RoasterCommand.cs` | `RoasterCommand` | The command characters, one constant each |
 | `Hardware/RoasterLink.cs` | `RoasterLink` | Serial port: open (9600 baud), close, send, read a line |
@@ -98,7 +99,8 @@ The GUI is one screen (`Form_CoffeeRoasto`, split over several partial files) an
 | `Recording/RecordingSession.cs`, `Coffee.cs` | `RecordingSession`, `Coffee` | The samples collected while recording |
 | `Recording/ExcelExporter.cs` | `ExcelExporter` | Copies the data grid to a new Excel workbook |
 | `UI/LampBoard.cs` | `LampBoard`, `Lamp` | All pilot lamps by name: `On(...)`, `Off(...)`, `AllOff()` |
-| `UI/PilotLamp.cs` | `PilotLamp` | Round `Button`; `BackColor` is the lamp colour (dark green = off, lime = on) |
+| `UI/PilotLamp.cs` | `PilotLamp` | Round shaded lamp; `BackColor` is the lamp colour (`Palette.LampOff` = off, `Palette.LampOn` = on) |
+| `UI/Palette.cs` | `Palette` | The colours and fonts of the screen and the flat button style |
 | `UI/TemperatureChart.cs` | `TemperatureChart` | The chart and its three series |
 | `UI/RoastClock.cs` | `RoastClock` | The time axis (mm:ss since connect or mode start) |
 | `Program.cs` | `Program` | Entry point |

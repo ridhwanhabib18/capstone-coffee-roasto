@@ -36,6 +36,7 @@ Firmware: Arduino (AVR), `max6675` and `Servo` libraries, 9600 baud.
   (samples, Excel export), `UI/` (lamps, chart, clock). `Hardware`, `Profiles` and `Recording` never reference the form.
 - All serial I/O goes through `RoasterLink`; the serial thread only reads a line and hands it to the UI thread with
   `BeginInvoke`. Command characters live in `RoasterCommand`, never as string literals in handlers.
+- Look and feel lives in `Form1.Theme.cs` and `UI/Palette.cs` (colours, fonts, header); `Form1.Designer.cs` keeps the controls and layout. Use `Palette` colours, not literals; lamps are `Palette.LampOn` / `LampOff`.
 - New `.cs` files must be added to `CoffeeRoasto_GUI.csproj` (old-style project, no globbing).
 - Every button maps to one protocol character (see the protocol document); no hidden commands.
 - The PID loop runs on the Arduino, not in the GUI. The GUI only supplies set points and shows state (ADR-002).

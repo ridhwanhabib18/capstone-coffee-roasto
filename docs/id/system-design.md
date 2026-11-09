@@ -35,6 +35,7 @@ GUI adalah satu layar (`Form_CoffeeRoasto`, dipecah menjadi beberapa file partia
 | `Form1.Modes.cs` | (partial) | Start/stop heating, auto, dan PID beserta lampunya |
 | `Form1.Recording.cs` | (partial) | Start/stop perekaman, ekspor |
 | `Form1.Profile.cs` | (partial) | Memilih profil, memilih sheet, mengirimnya |
+| `Form1.Theme.cs` | (partial) | Warna, font, header dengan lencana koneksi, kartu di belakang kontrol manual, gaya grafik dan tabel; hanya tampilan |
 | `Form1.Designer.cs` | (dibuat otomatis) | Kontrol dan event dari designer Visual Studio |
 | `Hardware/RoasterCommand.cs` | `RoasterCommand` | Karakter perintah, satu konstanta untuk tiap perintah |
 | `Hardware/RoasterLink.cs` | `RoasterLink` | Port serial: buka (9600 baud), tutup, kirim, baca satu baris |
@@ -44,7 +45,8 @@ GUI adalah satu layar (`Form_CoffeeRoasto`, dipecah menjadi beberapa file partia
 | `Recording/RecordingSession.cs`, `Coffee.cs` | `RecordingSession`, `Coffee` | Sampel yang dikumpulkan saat merekam |
 | `Recording/ExcelExporter.cs` | `ExcelExporter` | Menyalin data grid ke workbook Excel baru |
 | `UI/LampBoard.cs` | `LampBoard`, `Lamp` | Semua lampu indikator berdasarkan nama: `On(...)`, `Off(...)`, `AllOff()` |
-| `UI/PilotLamp.cs` | `PilotLamp` | `Button` bulat; `BackColor` adalah warna lampu (hijau tua = mati, lime = hidup) |
+| `UI/PilotLamp.cs` | `PilotLamp` | Lampu bulat berbayang; `BackColor` adalah warna lampu (`Palette.LampOff` = mati, `Palette.LampOn` = hidup) |
+| `UI/Palette.cs` | `Palette` | Warna dan font layar serta gaya tombol flat |
 | `UI/TemperatureChart.cs` | `TemperatureChart` | Grafik dan ketiga serinya |
 | `UI/RoastClock.cs` | `RoastClock` | Sumbu waktu (mm:ss sejak connect atau mode dimulai) |
 | `Program.cs` | `Program` | Titik masuk |

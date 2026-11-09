@@ -79,7 +79,7 @@ Windows regional settings must use a comma as the decimal separator (for example
 | Action | What it does |
 | --- | --- |
 | CONNECT / DISCONNECT | Opens or closes the serial port at 9600 baud; all controls stay disabled until connected |
-| Burner, Motor drum, Blower drum, Cooler, Motor valve | Manual ON/OFF (valve: OPEN/CLOSE); the lamp turns lime when on |
+| Burner, Motor drum, Blower drum, Cooler, Motor valve | Manual ON/OFF (valve: OPEN/CLOSE); the lamp turns bright green when on |
 | HEATING MODE ON/OFF | Pre-heat to 150 °C for 600 s with drum motor and blower on |
 | PID MODE ON | Starts the PID loop with a 150 °C set point until a profile is sent |
 | BROWSE + SHEET + START | Loads the `beantemperature` column of an Excel sheet and sends it to the board in groups of 10 |

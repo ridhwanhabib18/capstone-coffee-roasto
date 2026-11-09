@@ -29,6 +29,7 @@ namespace CoffeeRoasto_GUI
         {
             InitializeComponent();
             ComposeParts();
+            ApplyTheme();
         }
 
         /// <summary>Creates the helper objects the handlers work with.</summary>

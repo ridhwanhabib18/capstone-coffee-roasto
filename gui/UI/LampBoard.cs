@@ -19,8 +19,8 @@ namespace CoffeeRoasto_GUI.UI
     /// <summary>All pilot lamps of the screen, addressed by name instead of by control.</summary>
     internal sealed class LampBoard
     {
-        private static readonly Color OnColor = Color.Lime;
-        private static readonly Color OffColor = Color.DarkGreen;
+        private static readonly Color OnColor = Palette.LampOn;
+        private static readonly Color OffColor = Palette.LampOff;
 
         private readonly IDictionary<Lamp, PilotLamp> _lamps;
 

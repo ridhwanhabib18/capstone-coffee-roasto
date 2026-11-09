@@ -51,6 +51,7 @@ namespace CoffeeRoasto_GUI
                 button_Disconnect.Enabled = true;
                 progressBar_PanelConnection.Value = 100;
                 SetControlsEnabled(true);
+                SetConnectionBadge(true);
 
                 _chart.ClearMeasured();
             }
@@ -76,6 +77,7 @@ namespace CoffeeRoasto_GUI
                 button_Disconnect.Enabled = false;
                 progressBar_PanelConnection.Value = 0;
                 SetControlsEnabled(false);
+                SetConnectionBadge(false);
 
                 _chart.ClearAll();
                 label_DataBeanTemperature.Text = NoReferenceText;

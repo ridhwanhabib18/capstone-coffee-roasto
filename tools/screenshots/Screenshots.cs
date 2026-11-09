@@ -90,6 +90,7 @@ internal static class Screenshots
         Control("button_Disconnect").Enabled = true;
         ((ProgressBar)Control("progressBar_PanelConnection")).Value = 100;
         Call(_form, "SetControlsEnabled", true);
+        Call(_form, "SetConnectionBadge", true);
         Call(Get(_form, "_chart"), "ClearMeasured");
         Pump();
     }

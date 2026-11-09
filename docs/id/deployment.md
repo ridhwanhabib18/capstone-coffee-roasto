@@ -30,7 +30,7 @@ Jalankan dari `bin/Release` bersama DLL-nya; aplikasi tidak butuh folder `profil
 
 ### 3. Menjalankan roasting
 1. Jalankan Coffee Roasto, buka daftar COM PORT, pilih board, tekan **CONNECT**. Bar terisi dan kontrol aktif.
-2. Cek pembacaan terhadap suhu yang diketahui dan pastikan semua lampu hijau tua.
+2. Cek pembacaan terhadap suhu yang diketahui dan pastikan semua lampu hijau redup.
 3. Opsional, pemanasan awal: **HEATING MODE ON**. Tunggu "Heating Selesai" (10 menit).
 4. Tekan **PID MODE ON**, lalu **BROWSE**, pilih file profil dan sheet, dan tekan **START**.
 5. Tekan **RECORD DATA START** bila ingin log; tekan **STOP** saat selesai, lalu **EXPORT**.

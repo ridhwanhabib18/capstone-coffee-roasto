@@ -30,7 +30,7 @@ Run it from `bin/Release` with its DLLs; the app does not need the `profiles` fo
 
 ### 3. Run a roast
 1. Start Coffee Roasto, open the COM PORT list, pick the board, press **CONNECT**. The bar fills and the controls turn on.
-2. Check the readings against a known temperature and that every lamp is dark green.
+2. Check the readings against a known temperature and that every lamp is dim green.
 3. Optional pre-heat: **HEATING MODE ON**. Wait for "Heating Selesai" (10 minutes).
 4. Press **PID MODE ON**, then **BROWSE**, pick the profile file and the sheet, and press **START**.
 5. Press **RECORD DATA START** if you want a log; press **STOP** when done, then **EXPORT**.
