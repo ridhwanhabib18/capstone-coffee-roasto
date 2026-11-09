@@ -8,15 +8,16 @@ Operator sudah merencanakan roasting di spreadsheet dan ingin menyimpan catatan 
 
 ## Keputusan
 Profil referensi dibaca dari `.xls`/`.xlsx` dengan ExcelDataReader, hanya memakai kolom berheader `beantemperature`.
-Data rekaman diekspor dengan Microsoft Excel Interop.
+Data rekaman diekspor ke `.xlsx` dengan ClosedXML (v1 memakai Microsoft Excel Interop).
 
 ## Alasan
 - Tidak ada format file baru yang harus diajarkan; contoh sudah ada di `profiles/`.
-- ExcelDataReader membaca kedua format tanpa Excel terpasang.
+- ExcelDataReader dan ClosedXML bekerja tanpa Excel terpasang; ExcelDataReader membaca kedua format.
 
 ## Konsekuensi
-Ekspor butuh Excel di PC dan melewati baris terakhir grid. Salah ketik header menghasilkan tabel kosong. File lock
-Excel (`~$*.xlsx`) bisa terbawa di folder profil dan tidak boleh di-commit.
+Salah ketik header menghasilkan tabel kosong. File `.xls` lama butuh penyedia code page yang didaftarkan `ProfileReader`.
+File lock Excel (`~$*.xlsx`) bisa terbawa di folder profil dan tidak boleh di-commit. Ekspor v1 butuh Excel dan melewati
+baris terakhir; v2.0 tidak membutuhkan keduanya.
 
 ## Alternatif yang ditolak
 - CSV: tanpa dependensi, tetapi bukan cara operator menyimpan profil. Layak ditambahkan sebagai ekspor kedua.

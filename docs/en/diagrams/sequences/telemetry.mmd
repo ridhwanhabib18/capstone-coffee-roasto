@@ -1,19 +1,21 @@
 sequenceDiagram
   actor Op as Operator
-  participant GUI as Coffee Roasto GUI
+  participant UI as MainWindow
+  participant VM as MainViewModel
+  participant Link as RoasterLink
   participant FW as Arduino firmware
-  participant TC as MAX6675 x2
 
-  Op->>GUI: Pick COM port, press CONNECT
-  GUI->>FW: open port 9600, send "#"
+  Op->>UI: Choose a COM port, press Connect
+  UI->>VM: ConnectCommand
+  VM->>Link: Open(port) and send "#"
   Note over FW: "#" is not a command, so it is read as set point 0 (clears old state)
-  loop every 1 s
-    FW->>TC: readCelsius()
+  loop every ~4 s (4 samples of 1 s, averaged)
+    FW-->>Link: @37.11A38.67B0C
+    Link-->>VM: LineReceived (serial thread)
+    VM->>VM: Post to the UI thread, FrameParser.Parse (invariant culture)
+    VM-->>UI: readings, delta, rate of rise, elapsed
+    VM-->>UI: History.Changed, the chart is redrawn
   end
-  Note over FW: after 4 samples: average, calibrate, 0.25 C dead band
-  FW-->>GUI: @37.11A38.67B0C
-  GUI->>GUI: parse, divide by 100, BeginInvoke(HandleLine)
-  GUI-->>Op: labels and chart updated
   opt recording is on
-    GUI->>GUI: add Coffee(bean, drum) to the list
+    VM->>VM: RecordingSession.Add(bean, drum, reference, seconds)
   end

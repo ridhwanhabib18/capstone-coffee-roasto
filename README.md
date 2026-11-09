@@ -1,25 +1,27 @@
-# Coffee Roasto — Coffee Roaster Monitoring and Control
+# Coffee Roasto v2.0
 
 [Bahasa Indonesia](README.id.md)
 
-Coffee Roasto is a capstone project that automates a drum coffee roaster. An Arduino reads two thermocouples and
-drives the burner, drum motor, blower, cooler and gas valve; a Windows desktop app shows the temperatures live,
-records them, and runs roasting automatically with a PID controller that follows a reference temperature profile.
+**New generation of GUI for Monitoring Temperature Regulation System on Coffee Roaster Machine.**
 
-> Status: the GUI and the Arduino firmware are built and were tested on the roaster. Known gaps are listed in the
-> [system design](docs/en/system-design.md#10-known-limitations).
+Coffee Roasto is a capstone project that automates a drum coffee roaster. An Arduino reads two thermocouples and drives the burner, drum motor, blower, cooler and gas valve; a Windows desktop app shows the temperatures live, records them, and runs roasting automatically with a PID controller that follows a reference temperature profile. Version 2.0 is a new Fluent-style app on .NET 10.
+
+> Status: the app and the Arduino firmware are built and tested without a roaster (see [testing](docs/en/testing.md)). Run the checklist in the [deployment guide](docs/en/deployment.md) with the burner disconnected before the first real roast.
 
 ## Highlights
-- Live bean, drum and reference temperature on a chart, one reading every 4 seconds
-- Manual control of burner, drum motor, blower, cooler and valve with pilot lamps that show the state
+- Fluent design (WPF-UI): cards, Mica backdrop on Windows 11, **light and dark theme** with one click
+- Live chart (ScottPlot) of bean, drum and reference temperature with a mm:ss axis, zoom and pan
+- Reading tiles: bean, drum, reference, **bean − reference**, **rate of rise (°C/min)** and elapsed time
+- Manual control of burner, drum motor, blower, cooler and gas valve with lamps that show the state
 - Heating mode: pre-heats the drum to 150 °C for 10 minutes
 - PID mode: follows a reference profile loaded from an Excel file (bean temperature per step)
-- Safety stop at 250 °C and a "roasting done" signal from the hardware
-- Record the session and export it to Excel
+- Safety stop at 250 °C and a "roasting finished" toast from the hardware
+- Record a session and export it to `.xlsx` (Excel does not have to be installed)
+- One self-contained `.exe`, no .NET and no installer needed on the roaster PC
 
 ## Tech stack
-C# · .NET Framework 4.7.2 · Windows Forms · Chart (DataVisualization) · ExcelDataReader · Excel Interop ·
-Arduino (C++) · MAX6675 thermocouple amplifiers · Servo · USB serial (9600 baud)
+C# · .NET 10 · WPF · WPF-UI (Fluent) · ScottPlot 5 · CommunityToolkit.Mvvm · ClosedXML · ExcelDataReader ·
+xUnit · Arduino (C++) · MAX6675 thermocouple amplifiers · Servo · USB serial (9600 baud)
 
 ## Documentation
 - [Requirements (as built)](docs/en/PRD.md)
@@ -30,19 +32,23 @@ Arduino (C++) · MAX6675 thermocouple amplifiers · Servo · USB serial (9600 ba
 - [Technical Q&A](docs/en/technical-qa.md)
 - [Testing and demo](docs/en/testing.md)
 - [Build, install and operate](docs/en/deployment.md)
+- [Changelog](CHANGELOG.md)
 - Diagrams (Mermaid): [`docs/en/diagrams/`](docs/en/diagrams/)
 
 ## Repository layout
 | Path | What it holds |
 | --- | --- |
-| `gui/` | Visual Studio solution of the desktop app (`Form1.cs`, `Coffee.cs`, `PilotLamp.cs`) |
-| `installer/` | ClickOnce installer for the GUI (`setup.exe`, `CoffeeRoasto_GUI.application`, `autorun.inf`) |
-| `tests/` | GUI logic tests and the firmware simulation with its golden traces |
-| `tools/screenshots/` | Replays a roast through the real window and saves the screenshots |
-| `profiles/` | Sample reference temperature profiles (`.xls`, `.xlsx`) |
-| `firmware/Program_PID_CP/` | The firmware that runs on the roaster |
+| `src/CoffeeRoasto.Core/` | The logic without a screen: serial link, line parser, profiles, recording, Excel export |
+| `src/CoffeeRoasto.App/` | The WPF app: window, view model, controls |
+| `firmware/Program_PID_CP/` | The firmware that runs on the roaster (tabs: config, actuators, sensors, PID, modes) |
 | `firmware/Pengujian_Hardware/` | Relay test sketch |
 | `firmware/moveServo/` | Unfinished servo ramp sketch (does not compile, see limitations) |
+| `tests/CoffeeRoasto.Tests/` | xUnit tests for `Core` and the view model |
+| `tests/firmware-sim/` | The firmware run on the PC, with golden traces of the original firmware |
+| `tools/screenshots/` | Replays a roast through the real window and saves the screenshots |
+| `profiles/` | Sample reference temperature profiles (`.xls`, `.xlsx`) |
+| `installer/` | `publish.ps1` for the single-file `.exe`; the v1.0 ClickOnce installer in `v1-clickonce/` |
+| `check.ps1` | Restore, build, tests and firmware simulation in one command |
 
 ## Demo
 The pictures come from the real window, replaying a whole 29-minute roast that the firmware simulation produced (see [testing and demo](docs/en/testing.md)).
@@ -50,45 +56,98 @@ The pictures come from the real window, replaying a whole 29-minute roast that t
 ![PID roast](docs/assets/flows/pid-roast.gif)
 
 <table>
-<tr><td align="center" valign="top"><img src="docs/assets/screenshots/03-profile-loaded.png" alt="A reference profile loaded from Excel" width="420"><br><sub>A reference profile loaded from Excel</sub></td><td align="center" valign="top"><img src="docs/assets/screenshots/04-pid-running-15min.png" alt="PID mode after 15 minutes: the bean temperature follows the reference" width="420"><br><sub>PID mode after 15 minutes: the bean temperature follows the reference</sub></td></tr>
-<tr><td align="center" valign="top"><img src="docs/assets/screenshots/05-roast-finished.png" alt="Roast finished, recording in the data table" width="420"><br><sub>Roast finished, recording in the data table</sub></td><td align="center" valign="top"><img src="docs/assets/screenshots/01-start.png" alt="Start screen, everything off until CONNECT" width="420"><br><sub>Start screen, everything off until CONNECT</sub></td></tr>
+<tr><td align="center" valign="top"><img src="docs/assets/screenshots/04-pid-running-15min.png" alt="PID mode after 15 minutes: the bean temperature follows the reference" width="420"><br><sub>PID mode after 15 minutes: the bean temperature follows the reference</sub></td><td align="center" valign="top"><img src="docs/assets/screenshots/06-dark-theme.png" alt="The same screen in the dark theme" width="420"><br><sub>Dark theme, with a toast when the roast is finished</sub></td></tr>
+<tr><td align="center" valign="top"><img src="docs/assets/screenshots/03-profile-loaded.png" alt="A reference profile loaded from Excel" width="420"><br><sub>A reference profile loaded from Excel</sub></td><td align="center" valign="top"><img src="docs/assets/screenshots/01-start.png" alt="Start screen, everything off until Connect" width="420"><br><sub>Start screen, everything off until Connect</sub></td></tr>
 </table>
 
-## Tests
-```powershell
-tests/gui-logic/run.ps1      # 69 checks on the parser, profile splitting and recording
-tests/firmware-sim/run.ps1   # the firmware on the PC, 12 scenarios compared with traces of the original firmware
-```
-There is no roaster in the loop: see [what is and is not tested](docs/en/testing.md#5-what-is-not-tested).
-
 ## Getting started
-Requirements: Windows with .NET Framework 4.7.2, Microsoft Excel (only for the export button), Visual Studio 2017 or
-newer (to build the GUI), Arduino IDE with the `MAX6675` library (to flash the firmware).
+Requirements: Windows 10 (1607) or newer, 64-bit. To build: the .NET 10 SDK. For the firmware: the Arduino IDE with the `MAX6675 library`.
 
 ```text
-1. Open firmware/Program_PID_CP/Program_PID_CP.ino in the Arduino IDE,
-   install the "MAX6675" library, and upload it to the board.
-2. Install the GUI: run "installer/setup.exe"
-   (or open CoffeeRoasto_GUI.sln in Visual Studio and press F5).
-3. Plug the board in, start Coffee Roasto, pick the COM port and press CONNECT.
+1. Flash firmware/Program_PID_CP/Program_PID_CP.ino to the board (Arduino IDE; install "MAX6675 library").
+2. Run the app:    dotnet run --project src/CoffeeRoasto.App -c Release
+   or publish it:  ./installer/publish.ps1   ->  installer/dist/CoffeeRoasto.exe (about 74 MB, self-contained)
+3. Plug the board in, start Coffee Roasto, choose the COM port and press Connect.
 ```
-
-Windows regional settings must use a comma as the decimal separator (for example Indonesian); see
-[troubleshooting](docs/en/deployment.md#troubleshooting).
 
 | Action | What it does |
 | --- | --- |
-| CONNECT / DISCONNECT | Opens or closes the serial port at 9600 baud; all controls stay disabled until connected |
-| Burner, Motor drum, Blower drum, Cooler, Motor valve | Manual ON/OFF (valve: OPEN/CLOSE); the lamp turns bright green when on |
-| HEATING MODE ON/OFF | Pre-heat to 150 °C for 600 s with drum motor and blower on |
-| PID MODE ON | Starts the PID loop with a 150 °C set point until a profile is sent |
-| BROWSE + SHEET + START | Loads the `beantemperature` column of an Excel sheet and sends it to the board in groups of 10 |
-| INPUT TEMPERATURE + SEND | Sets a single reference temperature by hand |
-| RECORD DATA START / STOP / EXPORT | Collects readings into the data table and exports them to Excel |
+| Connect / Disconnect | Opens or closes the serial port at 9600 baud; the control cards stay disabled until connected |
+| Burner, Drum motor, Blower, Cooler, Gas valve | Manual ON/OFF (valve: OPEN/CLOSE); the lamp lights when on |
+| Heating mode ON/OFF | Pre-heat to 150 °C for 600 s with drum motor and blower on |
+| PID mode ON | Starts the PID loop with a 150 °C set point until a profile is sent |
+| Browse, sheet, Send profile | Loads the `beantemperature` column of an Excel sheet and sends it to the board in groups of 10 |
+| Set point + Send | Gives the PID a single reference temperature by hand |
+| Start / Stop / Export | Collects readings into the data card and exports them to `.xlsx` |
+| Dark / Light | Switches the theme of the window and the chart |
 
-To build from the command line: `msbuild "gui/CoffeeRoasto_GUI.sln" /p:Configuration=Release`
-(restore the NuGet packages first with `nuget restore`).
+Everything that can be checked without a roaster runs with `./check.ps1` (restore, build, 32 tests, firmware simulation).
+
+## PID control (firmware)
+The PID runs on the Arduino, not in the app (ADR-002). Code: `firmware/Program_PID_CP/` (`Pid.ino`, `PidMode.ino`, `Actuators.ino`, `ReferenceProfile.h`, `Config.h`).
+
+### Control loop
+```text
+Reference profile (Excel -> GUI) -> set point (SP) -+
+                                                    v
+Bean thermocouple -> 4-sample average -> PV ---> e = SP - PV -> PID -> clamp 0..40 -+-> valve servo = 40 - PID
+ (regression-corrected, dead band 0.25)                                             +-> burner relay (on/off)
+```
+
+| Element | In this project |
+| --- | --- |
+| Process | Drum coffee roaster with a gas burner |
+| Process variable (PV) | Bean temperature, MAX6675 K-type thermocouple |
+| Set point (SP) | The reference profile from Excel, sent by the GUI ten values at a time; 150 °C before a profile arrives; 0 ends the roast |
+| Actuators | Valve servo (0° to 40°) and the burner relay (active LOW) |
+| Sampling period | One update every ~4 s (1 s samples, 4 averaged) |
+
+### The calculation (`computePid`)
+```text
+e   = SP - PV
+P   = KP * e                 KP = 21.095
+I   = KI * (e + e_prev)      KI = 0.2
+D   = e - e_prev
+PID = P + I + D, limited to 0..40
+```
+The gains come from a MATLAB simulation. `e_prev` is a constant 0 and `KD` (30 in the simulation) is not used, so in practice
+**PID = (KP + KI + 1) * e = 22.295 * e**: a proportional controller with one combined gain, not a true integral or derivative
+(system design, known limitation 1). The code was kept exactly as in the original sketch; the refactor was checked against it
+with golden traces.
+
+### From the PID value to the actuators
+- **Valve:** `servo = 40 - PID`. A large error gives PID = 40 and the servo at 0°; an error of 0 or less gives 40°. (Which angle is physically open or closed is being confirmed on the machine; the code names 0° `VALVE_OPEN_ANGLE`.)
+- **Burner relay:** switched on only when PID reaches 40 (error of about 1.79 °C or more) and off when PID reaches 0 (bean at or above the set point). In between it keeps its state and only the valve moves, which stops the relay from chattering.
+- **In practice:** a proportional band of only about 1.8 °C, so the loop behaves close to on/off with a little modulation near the set point.
+
+### Set point handling
+`ReferenceProfile` keeps two buffers (*pending* and *active*). One set point is used per averaged reading (~4 s), so ten values
+last about 40 s. A new line never overwrites values still being followed; if no new line arrives, the active group is reused.
+
+### Safety rules around the loop
+`s` from the GUI stops PID mode and turns the burner off. A bean temperature of 250 °C or more stops it by itself. A set point of 0
+ends the roast (burner and blower off, drum on, cooler on). Because the loop is on the board, these still work if the PC hangs.
+
+### Conclusion: why PID, and its strengths and weaknesses
+**Why PID.** The goal (PRD) is to make the bean temperature follow a reference profile automatically. That is a set point tracking
+problem with one measured output and one adjustable heat input, which is the standard use of a PID controller. It needs no
+detailed model of the roaster, it is simple enough to run on an AVR with a 4 s period, and the team could simulate and tune it in
+MATLAB first. Running it on the Arduino keeps the control period steady and the safety rules independent of the PC (ADR-002). The
+repository records the decision to put the loop on the board (ADR-002) and the MATLAB origin of the gains; it does not contain a
+separate record comparing PID with other control methods, so the reasons above are the engineering rationale, not a quoted decision.
+
+| Strengths | Weaknesses |
+| --- | --- |
+| Follows a changing profile, not only one fixed temperature | The implemented I and D terms are not real: no accumulated error, no rate of change, so no removal of steady-state error and no damping |
+| Light on resources: a few float operations per 4 s | Narrow proportional band (about 1.8 °C), so it acts almost like on/off and may oscillate around the set point |
+| Closed loop: it reacts to the measured bean temperature, not to a timer | The MATLAB gains are not fully applied, so behaviour differs from the simulation |
+| Output limit (0..40) matches the servo range | No anti-windup or rate limit, and a 4 s sample period is slow against the thermal delay of the drum |
+| Safety (250 °C stop, `s`) lives on the board | Tuning means re-flashing; the GUI cannot change the gains (out of scope in the PRD) |
+| Burner switching has hysteresis, so the relay does not chatter | No watchdog: if the cable is pulled the board keeps its last mode |
+
+The weaknesses about oscillation and steady-state offset follow from reading the code; they have not been measured on a real roast yet.
+To get a real PID: keep `previousError`, add an integral accumulator with anti-windup, use `KD` with the 4 s period, and re-tune on
+the machine. That changes how a gas burner is controlled, so test it with the burner disconnected first and update the golden traces.
 
 ## Safety
-The firmware turns the burner off and stops at 250 °C, but the gas burner, the hot drum and the moving parts are
-real hazards. Never leave a roast unattended; test changes with the burner disconnected first.
+The firmware turns the burner off and stops at 250 °C, but the gas burner, the hot drum and the moving parts are real hazards. Never leave a roast unattended; test changes with the burner disconnected first.

@@ -2,19 +2,20 @@
 
 Nov 9, 2026 · @M Ridhwan Habib A
 
-How Coffee Roasto is tested without a roaster, what the tests prove and what they cannot. The same tools make the screenshots and the animation of the README, so the pictures show the real application.
+How Coffee Roasto v2.0 is tested without a roaster, what the tests prove and what they cannot. The same tools make the screenshots and the animation of the README, so the pictures show the real application.
 
 ## 1. What is tested
 
 | Layer | Tool | What it checks | Result (Nov 9, 2026) |
 | --- | --- | --- | --- |
-| GUI logic | `tests/gui-logic/run.ps1` | `FrameParser`, `ProfileTransmitter.BuildChunks` (compared with the original algorithm for 0–45 rows), `RecordingSession` | 69 checks pass |
+| Core logic | `tests/CoffeeRoasto.Tests/Core` (xUnit) | `FrameParser` (also under three cultures), `ProfileTransmitter.BuildChunks` (compared with the v1 algorithm for 0–45 rows), `ProfileReader` on the real sample `.xlsx` and the old `.xls`, `RecordingSession`, the Excel export including its last row | pass |
+| View model | `tests/CoffeeRoasto.Tests/ViewModels` (xUnit) | Readings, delta and rate of rise, lamps and toasts for the events, buttons with a closed port, refused input, recording | pass |
 | Firmware | `tests/firmware-sim/run.ps1` | The sketch run on the PC against 12 scripted scenarios; pin changes, servo angles and serial lines are compared with `golden/` | 12 of 12 match |
-| Compile (GUI) | MSBuild, Release | The solution builds without warnings | pass |
-| Compile (firmware) | `arduino-cli compile --fqbn arduino:avr:uno` | No warnings with `--warnings all`; flash 11,104 bytes (34 %), RAM 334 bytes (16 %) | pass |
-| Screens | `tools/screenshots/run.ps1` | The real window draws a whole roast; used for the pictures below | 5 screenshots, 1 GIF |
+| Compile | `dotnet build`, `arduino-cli compile --fqbn arduino:avr:uno` | No warnings; firmware flash 11,104 bytes (34 %), RAM 334 bytes (16 %) | pass |
+| Published file | `installer/publish.ps1`, then starting the `.exe` | The single-file build starts and shows its window | pass |
+| Screens | `tools/screenshots/run.ps1` | The real window and view model draw a whole roast in the light and the dark theme | 7 screenshots, 1 GIF |
 
-Raw outputs are in [`docs/assets/testing/`](../assets/testing/).
+32 xUnit tests in total. Raw outputs of the firmware simulation are in [`docs/assets/testing/`](../assets/testing/).
 
 ## 2. Firmware simulation
 
@@ -41,25 +42,28 @@ Scenario 12 in numbers: 458 data frames, the bean temperature starts at 139 °C 
 
 ## 3. Screenshots and animation
 
-`tools/screenshots/run.ps1` builds the GUI, opens the real window, and replays scenario 12 through `HandleLine` as if the lines came from the serial port. Only the serial port is missing; the connected state and the lamps that the buttons would set are set by hand. The clock is fixed with `RoastClock.FreezeAt` so the time axis shows the 29 minutes. Output: `docs/assets/screenshots/` and `docs/assets/flows/pid-roast.gif`.
+`tools/screenshots/run.ps1` opens the real `MainWindow` with a real `MainViewModel` and replays scenario 12 through `HandleLine` as if the lines came from the serial port. Only the serial port is missing; the connected state and the lamps that the buttons would set are set directly. The time axis comes from `ElapsedProvider`, so it shows the 29 minutes without waiting. Output: `docs/assets/screenshots/` and `docs/assets/flows/pid-roast.gif`.
 
 | | |
 | --- | --- |
 | ![Start](../assets/screenshots/01-start.png) | ![Connected](../assets/screenshots/02-connected.png) |
-| 1. Start: everything off until CONNECT | 2. Connected: controls enabled, COM port chosen |
+| 1. Start: everything off until Connect | 2. Connected: control cards on, COM port chosen |
 | ![Profile](../assets/screenshots/03-profile-loaded.png) | ![5 min](../assets/screenshots/04-pid-running-05min.png) |
-| 3. A profile file and sheet loaded into the data table | 4. PID mode after 5 minutes |
+| 3. A profile file and sheet loaded into the data card | 4. PID mode after 5 minutes |
 | ![15 min](../assets/screenshots/04-pid-running-15min.png) | ![Finished](../assets/screenshots/05-roast-finished.png) |
-| 4. PID mode after 15 minutes: bean follows the reference, burner lamp follows `Y` and `Z` | 5. Roast finished: the recording is in the data table, the cooler lamp is on |
+| 5. After 15 minutes: bean follows the reference, delta and rate of rise on the tiles | 6. Roast finished: the recording is in the data card, a toast says so |
+| ![Dark](../assets/screenshots/06-dark-theme.png) | |
+| 7. The same screen in the dark theme | |
 
 ![PID roast](../assets/flows/pid-roast.gif)
 
 ## 4. How to run
 
 ```powershell
-tests/gui-logic/run.ps1          # needs Visual Studio (Roslyn) and `nuget restore` in gui/
-tests/firmware-sim/run.ps1       # needs the Visual Studio C++ build tools (cl.exe)
-tools/screenshots/run.ps1        # needs MSBuild; the GIF needs Python with Pillow
+./check.ps1                       # restore, build, all xUnit tests and the firmware simulation
+./check.ps1 -Quick                # the same without the firmware simulation (no C++ build tools needed)
+tests/firmware-sim/run.ps1        # only the firmware simulation (needs the Visual Studio C++ build tools)
+tools/screenshots/run.ps1         # screenshots and GIF; the GIF needs Python with Pillow
 ```
 
 After a deliberate change of firmware behaviour, run `tests/firmware-sim/run.ps1 -Update` and review the diff of `golden/` before committing it. Add a prototype to `tests/firmware-sim/prototypes.h` when a tab gets a new function.
@@ -68,6 +72,6 @@ After a deliberate change of firmware behaviour, run `tests/firmware-sim/run.ps1
 
 - The real roaster: relays, the servo, the thermocouples, the gas valve and the thermal behaviour. Use the checklist in the [deployment guide](deployment.md) with the burner disconnected first.
 - The serial link itself (cable, driver, timeouts). The simulation hands lines directly to the code.
-- Excel export (needs Excel) and the file dialog.
+- The Windows file dialogs and opening Excel after an export; the export file itself is read back and checked.
 - The 1-second `readStringUntil` timeout that a command without a newline causes (known limitation 4); the simulation delivers whole lines.
-- The GUI event handlers as such; their logic is thin and checked through the screenshots.
+- Mica and other Windows 11 window effects; the screenshots use a plain background.

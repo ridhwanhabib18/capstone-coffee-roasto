@@ -2,7 +2,7 @@
 
 9 Nov 2026 · @M Ridhwan Habib A
 
-Coffee Roasto terdiri dari dua program: aplikasi desktop Windows Forms dan firmware Arduino, dihubungkan kabel serial USB. Firmware memegang loop kontrol real-time; aplikasi mengawasi, memplot, dan merekam. Dokumen ini menjelaskan sistem sebagaimana dibangun, dari kode di repositori. Diagramnya ada sebagai berkas Mermaid di [`docs/en/diagrams/`](../en/diagrams/) dan dirender di versi [bahasa Inggris](../en/system-design.md#2-system-context).
+Coffee Roasto v2.0 terdiri dari dua program: aplikasi desktop WPF di .NET 10 dan firmware Arduino, dihubungkan kabel serial USB. Firmware memegang loop kontrol real-time; aplikasi mengawasi, memplot, dan merekam. Dokumen ini menjelaskan sistem sebagaimana dibangun, dari kode di repositori. Diagramnya ada sebagai berkas Mermaid di [`docs/en/diagrams/`](../en/diagrams/) dan dirender di versi [bahasa Inggris](../en/system-design.md#2-system-context).
 
 ## 1. Cakupan & tujuan kualitas
 
@@ -12,10 +12,10 @@ Desain ditujukan untuk satu mesin sangrai, satu operator pada satu waktu, dengan
 | --- | --- | --- |
 | Keselamatan | Kompor tidak tetap hidup setelah stop atau suhu berlebih | Relay default mati, perintah `s`, batas keras 250 °C di firmware |
 | Kualitas kontrol | Suhu biji mengikuti profil | PID di board, set point diperbarui tiap ~4 detik |
-| Responsif | Data baru tampil dalam sedetik setelah tiba | Event serial + `BeginInvoke` ke thread UI |
+| Responsif | Data baru tampil dalam sedetik setelah tiba | Event serial, lalu `Dispatcher.BeginInvoke` ke thread UI |
 | Ketahanan | Aplikasi tidak crash karena frame rusak atau kabel dicabut | `try/catch` pada parsing dan penulisan serial |
-| Sederhana | Operator cukup memilih port COM | Satu layar, satu tombol per aksi |
-| Mudah dirawat | Kedua sisi terbaca oleh mahasiswa | Protokol satu karakter, satu `Form1.cs`, satu `.ino` |
+| Sederhana | Operator cukup memilih port COM | Satu jendela, satu tombol per aksi, satu `.exe` tanpa installer |
+| Mudah dirawat | Kedua sisi terbaca oleh mahasiswa | Protokol satu karakter; `Core` tanpa layar, view model, jendela tipis; satu tab kecil per tugas di firmware |
 
 **Gaya arsitektur:** GUI pengawas ditambah kontroler tertanam. Setelah sebuah mode berjalan, kontroler tidak bergantung pada PC untuk tetap aman, kecuali perintah `s` dan suplai profil.
 
@@ -25,31 +25,22 @@ Operator memakai GUI; GUI berbicara serial 9600 baud dengan firmware; firmware m
 
 ## 3. Komponen
 
-GUI adalah satu layar (`Form_CoffeeRoasto`, dipecah menjadi beberapa file partial) ditambah beberapa kelas kecil dengan satu tugas masing-masing. Hanya `UI/` yang mengenal layar, sehingga `Hardware/` dan `Profiles/` bisa dibaca dan diuji sendiri.
+Aplikasi adalah jendela WPF di atas library yang tidak punya layar. View model adalah satu-satunya yang diajak bicara jendela; `Core` bisa dibaca dan diuji sendiri.
 
 | Folder / file | Kelas | Tanggung jawab |
 | --- | --- | --- |
-| `Form1.cs` | `Form_CoffeeRoasto` | Membuat objek bantu, menangani baris masuk (telemetri dan kejadian) |
-| `Form1.Connection.cs` | (partial) | Daftar port COM, connect, disconnect, mengaktifkan atau menonaktifkan kontrol |
-| `Form1.Manual.cs` | (partial) | Tombol burner, motor drum, blower, cooler, valve; set point manual |
-| `Form1.Modes.cs` | (partial) | Start/stop heating, auto, dan PID beserta lampunya |
-| `Form1.Recording.cs` | (partial) | Start/stop perekaman, ekspor |
-| `Form1.Profile.cs` | (partial) | Memilih profil, memilih sheet, mengirimnya |
-| `Form1.Theme.cs` | (partial) | Warna, font, header dengan lencana koneksi, kartu di belakang kontrol manual, gaya grafik dan tabel; hanya tampilan |
-| `Form1.Designer.cs` | (dibuat otomatis) | Kontrol dan event dari designer Visual Studio |
-| `Hardware/RoasterCommand.cs` | `RoasterCommand` | Karakter perintah, satu konstanta untuk tiap perintah |
-| `Hardware/RoasterLink.cs` | `RoasterLink` | Port serial: buka (9600 baud), tutup, kirim, baca satu baris |
-| `Hardware/FrameParser.cs`, `ParsedLine.cs` | `FrameParser`, `ParsedLine`, `Telemetry`, `RoasterEvent` | Mengubah baris yang diterima menjadi pembacaan atau kejadian (logika murni) |
-| `Profiles/ProfileReader.cs` | `ProfileReader` | Membaca kolom `beantemperature` dari tiap sheet Excel |
-| `Profiles/ProfileTransmitter.cs` | `ProfileTransmitter` | Mengirim profil per sepuluh nilai, berjarak 40 detik, di thread latar |
-| `Recording/RecordingSession.cs`, `Coffee.cs` | `RecordingSession`, `Coffee` | Sampel yang dikumpulkan saat merekam |
-| `Recording/ExcelExporter.cs` | `ExcelExporter` | Menyalin data grid ke workbook Excel baru |
-| `UI/LampBoard.cs` | `LampBoard`, `Lamp` | Semua lampu indikator berdasarkan nama: `On(...)`, `Off(...)`, `AllOff()` |
-| `UI/PilotLamp.cs` | `PilotLamp` | Lampu bulat berbayang; `BackColor` adalah warna lampu (`Palette.LampOff` = mati, `Palette.LampOn` = hidup) |
-| `UI/Palette.cs` | `Palette` | Warna dan font layar serta gaya tombol flat |
-| `UI/TemperatureChart.cs` | `TemperatureChart` | Grafik dan ketiga serinya |
-| `UI/RoastClock.cs` | `RoastClock` | Sumbu waktu (mm:ss sejak connect atau mode dimulai) |
-| `Program.cs` | `Program` | Titik masuk |
+| `src/CoffeeRoasto.Core/Hardware/RoasterCommand.cs` | `RoasterCommand` | Karakter perintah, satu konstanta untuk tiap perintah |
+| `Hardware/RoasterLink.cs` | `RoasterLink` | Port serial (9600 baud): buka, tutup, kirim, event `LineReceived` |
+| `Hardware/FrameParser.cs`, `ParsedLine.cs` | `FrameParser`, `ParsedLine`, `Telemetry`, `RoasterEvent` | Mengubah baris yang diterima menjadi pembacaan atau kejadian; invariant culture; logika murni |
+| `Profiles/ProfileReader.cs` | `ProfileReader` | Membaca kolom `beantemperature` dari tiap sheet file `.xls` atau `.xlsx` |
+| `Profiles/ProfileTransmitter.cs` | `ProfileTransmitter` | Mengirim profil per sepuluh nilai, berjarak 40 detik, sebagai task latar |
+| `Recording/RecordingSession.cs` | `RecordingSession`, `Coffee` | Sampel yang dikumpulkan saat merekam |
+| `Recording/ExcelExporter.cs` | `ExcelExporter` | Menulis rekaman ke file `.xlsx` dengan ClosedXML; Excel tidak perlu terpasang |
+| `src/CoffeeRoasto.App/ViewModels/MainViewModel.cs` | `MainViewModel` | Semua yang ditampilkan jendela (pembacaan, selisih, rate of rise, lampu, tabel) dan setiap perintah di balik tombol |
+| `ViewModels/TemperatureHistory.cs` | `TemperatureHistory` | Titik-titik grafik; memicu `Changed` |
+| `MainWindow.xaml`, `.xaml.cs` | `MainWindow` | Jendela Fluent (WPF-UI): tata letak, tema terang dan gelap, grafik ScottPlot, dialog file, toast |
+| `Controls/LampIndicator.xaml`, `KpiTile.xaml` | `LampIndicator`, `KpiTile` | Lampu bulat berhalo dan kartu dengan satu pembacaan |
+| `App.xaml`, `App.xaml.cs` | `App` | Start-up, kamus tema Fluent, warna ketiga garis |
 | firmware `Program_PID_CP.ino` | | `setup()` dan `loop()`: baca perintah, baca sensor, arahkan ke mode |
 | firmware `Config.h`, `Commands.h`, `Globals.h` | | Pin dan batas, karakter protokol, objek bersama |
 | firmware `Actuators.ino` | | Relay, servo valve, pengalihan kompor oleh keluaran PID |
@@ -59,9 +50,7 @@ GUI adalah satu layar (`Form_CoffeeRoasto`, dipecah menjadi beberapa file partia
 | firmware `ManualMode.ino` | | Satu perintah per output, set point ketikan, penahan kompor manual |
 | firmware `PidMode.ino`, `HeatingMode.ino` | | Dua loop yang berjalan sampai selesai, dihentikan, atau suhu berlebih |
 
-Ketergantungan searah: `Form1.*` memakai `Hardware`, `Profiles`, `Recording`, dan `UI`; `Profiles` memakai `Hardware`. `Hardware`, `Profiles`, dan `Recording` tidak merujuk ke form.
-
-(Diagram: `diagrams/components.mmd`.)
+Ketergantungan searah: `MainWindow` memakai `MainViewModel`; view model memakai `Core`; `Core` tidak mengenal jendela. Tes dan alat screenshot memakai view model tanpa jendela. (Diagram: `diagrams/components.mmd`.)
 
 ## 4. Tampilan runtime
 
@@ -85,37 +74,39 @@ Idle → Manual (perintah tunggal) · Idle/Manual → Heating (`h`) → Idle set
 
 | Data | Lokasi | Bentuk |
 | --- | --- | --- |
-| Suhu biji, drum, referensi terakhir | `beantemperature`, `drumtemperature`, `referencetemperature` di form | `double`, °C |
-| Rekaman | `List<Coffee>` → `dataGridView` | Di memori, dihapus saat START; hilang saat ditutup kecuali diekspor |
-| Profil | `DataSet` dari ExcelDataReader | Hanya kolom berheader `beantemperature`; satu tabel per sheet |
-| Ekspor | Workbook Excel baru, sheet "Exported from gridview" | Baris header + satu baris per rekaman |
+| Pembacaan terakhir | `BeanText`, `DrumText`, `ReferenceText`, `DeltaText`, `RateText`, `ElapsedText` di view model | Teks, °C, satu desimal |
+| Titik grafik | `TemperatureHistory` | Empat list `double`: detik, biji, drum, referensi |
+| Rekaman | `RecordingSession.Samples` | Di memori, dihapus saat START; hilang saat ditutup kecuali diekspor |
+| Profil | `DataTableCollection` dari ExcelDataReader | Hanya kolom berheader `beantemperature`; satu tabel per sheet |
+| Ekspor | `.xlsx` baru, sheet "Roast" | Baris header + satu baris per sampel: waktu, biji, drum, referensi |
 | Contoh file | `profiles/` | Profil `.xls`, `.xlsx` |
 
 Tidak ada database dan tidak ada akses jaringan.
 
 ## 8. Threading
 
-Event serial `DataReceived` berjalan di thread pool dan memanggil `RoasterLink.TryReadLine`; barisnya lalu diserahkan ke `HandleLine` di thread UI dengan `BeginInvoke`. Pengiriman profil berjalan di `BackgroundWorker` dan tidur 40 detik di antara kelompok, jadi UI tetap responsif. Hasil parsing, lampu, label, grafik, dan message box semuanya ditangani di thread UI.
+`SerialPort.DataReceived` berjalan di thread pool. `RoasterLink` membaca barisnya di sana dan memicu `LineReceived`; view model menyerahkan tiap baris ke thread UI (`Post`, bawaannya `Dispatcher.BeginInvoke`) dan baru kemudian mem-parsing dan memperbarui layar. Pengiriman profil adalah `Task` latar yang menunggu 40 detik di antara kelompok. Jam layar adalah `DispatcherTimer` satu detik. Semua yang di-bind jendela hanya berubah di thread UI.
 
 ## 9. Build & distribusi
 
-Solution Visual Studio `CoffeeRoasto_GUI.sln`, target .NET Framework 4.7.2, output WinExe. Paket NuGet: ExcelDataReader 3.6.0, ExcelDataReader.DataSet 3.6.0, Microsoft.Office.Interop.Excel 15.0.4795.1000, System.Runtime.Extensions 4.3.1. Dipublikasikan dengan ClickOnce (`setup.exe`, `CoffeeRoasto_GUI.application`, `autorun.inf` untuk CD atau flashdisk). Lihat [panduan deploy](deployment.md).
+`CoffeeRoasto.slnx` berisi empat proyek: `CoffeeRoasto.Core` (net10.0), `CoffeeRoasto.App` (net10.0-windows, WPF), `CoffeeRoasto.Tests` (xUnit), dan `tools/screenshots`. Paket (semua MIT, BSD, atau Apache): WPF-UI, ScottPlot.WPF, CommunityToolkit.Mvvm, ClosedXML, ExcelDataReader (+ DataSet), System.IO.Ports, xUnit. `installer/publish.ps1` membuat satu `CoffeeRoasto.exe` self-contained single-file (sekitar 74 MB) yang tidak butuh .NET di PC. Installer ClickOnce v1.0 disimpan di `installer/v1-clickonce/`. Lihat [panduan deploy](deployment.md).
 
 ## 10. Keterbatasan yang diketahui
 
-Titik-titik di mana kode dan maksudnya berbeda. Daftar ini agar tidak ada yang terkejut; dokumentasi ini tidak mengubah satu pun.
+Titik-titik di mana kode dan maksudnya berbeda. Daftar ini agar tidak ada yang terkejut.
 
 | # | Area | Pengamatan | Dampak |
 | --- | --- | --- | --- |
 | 1 | PID firmware | `PREVIOUS_ERROR` tetap 0 dan `KD` (30) tidak dipakai; integral = `KI·e` dan turunan = `e` | Berperilaku seperti P + I kecil + P tambahan; gain MATLAB belum sepenuhnya berlaku |
-| 2 | Parsing GUI | `Convert.ToDouble(...) / 100` bergantung pada lokal PC | Nilai salah di PC berlokal Inggris |
-| 3 | Auto mode `m` | GUI mengirim `m` tetapi firmware tidak punya handler | AUTO MODE ON tidak berguna; pakai PID MODE |
-| 4 | Framing serial | GUI `Write("n")` tanpa newline, firmware menunggu `\n` | Perintah tiba setelah timeout `readStringUntil` 1 detik |
-| 5 | Threading | ~~`Data_Parsing` mengubah lampu di thread serial~~ **Diperbaiki**: baris ditangani di thread UI | tidak ada |
+| 2 | Parsing aplikasi | ~~`Convert.ToDouble(...) / 100` bergantung pada lokal PC~~ **Diperbaiki di v2.0**: nilai dibaca dengan invariant culture | tidak ada |
+| 3 | Auto mode `m` | Aplikasi mengirim `m` tetapi firmware tidak punya handler | AUTO MODE ON tidak berguna; pakai PID MODE |
+| 4 | Framing serial | Aplikasi menulis perintah tanpa newline, firmware menunggu `\n` | Perintah tiba setelah timeout `readStringUntil` 1 detik |
+| 5 | Threading | ~~Lampu diubah di thread serial~~ **Diperbaiki**: baris ditangani di thread UI | tidak ada |
 | 6 | Tombol Burner ON | ~~menulis tanpa cek `IsOpen`~~ **Diperbaiki**: semua perintah lewat `RoasterLink.Send` | tidak ada |
-| 7 | Heating OFF | `button_StopHeatingMode_Click` menampilkan "Roasting Selesai" sebelum mengirim `s` | Pesan menyesatkan |
-| 8 | Pengiriman profil | Memblokir 40 detik antar kelompok dan tidak bisa dibatalkan dari UI | Harus menekan OFF (`s`) untuk membatalkan |
+| 7 | Heating OFF | ~~menampilkan "Roasting Selesai" sebelum mengirim `s`~~ **Diperbaiki di v2.0**: tanpa pesan | tidak ada |
+| 8 | Pengiriman profil | Menunggu 40 detik antar kelompok dan tanpa tombol batal; OFF menghentikan firmware tetapi aplikasi terus mengirim baris | Tutup aplikasi atau tunggu untuk membatalkan |
 | 9 | `moveServo.ino` | Tidak bisa dikompilasi | Tidak dipakai firmware |
-| 10 | Repositori | `bin/`, `obj/`, `.vs/`, `packages/`, `Release.rar`, dan kunci penandatanganan ada di pohon | Repositori besar; jangan masukkan ke version control |
-| 11 | Ekspor | `Excel Interop` butuh Excel terpasang (baris terakhir yang terlewat sudah **diperbaiki**) | Gagal di PC tanpa Excel |
+| 10 | Repositori | ~~hasil build dan kunci penandatanganan ada di pohon~~ **Diperbaiki**: diabaikan git, file v1 di `archive/` dan `installer/v1-clickonce/` | tidak ada |
+| 11 | Ekspor | ~~butuh Excel dan melewati baris terakhir~~ **Diperbaiki di v2.0**: ClosedXML menulis `.xlsx`, setiap sampel diekspor | tidak ada |
 | 12 | Akhir profil | Tanpa baris baru firmware memakai ulang kelompok sepuluh terakhir, dan hanya nilai kosong yang mengakhiri roasting | Profil dengan jumlah baris kelipatan sepuluh tidak berakhir sendiri; tekan OFF atau tunggu 250 °C |
+| 13 | Build | `dotnet build` yang me-restore dan membangun proyek WPF dalam satu perintah bisa gagal di checkout bersih | Jalankan `dotnet restore` lebih dulu, atau pakai `check.ps1` |

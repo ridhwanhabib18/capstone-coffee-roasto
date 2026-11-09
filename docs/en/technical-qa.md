@@ -22,30 +22,30 @@ Kp = 21.095, Ki = 0.2, Kd = 30 come from a MATLAB simulation of the roaster. The
 
 The Arduino has fixed arrays (`Array_suhu[15]`) and a serial buffer of 64 bytes, and it consumes one set point per averaged reading (~4 s). Ten values last about 40 s, so the GUI sends the next group just as the last is used. The firmware keeps a second buffer so a new line does not overwrite values still in use. Sending the whole profile at once would overflow both.
 
-## 6. Why does the GUI divide the readings by 100?
+## 6. Why does the app read the temperatures with the invariant culture?
 
-It does not rescale anything intentionally: on a PC with an Indonesian culture `Convert.ToDouble("37.11")` reads the dot as a thousands separator and returns 3711, and the division restores 37.11. On an English-culture PC the same code returns 0.37. The robust fix is `double.Parse(s, CultureInfo.InvariantCulture)` without the division.
+The firmware prints a dot (`37.11`). v1 used `Convert.ToDouble(...) / 100`, which only gave 37.11 on a PC with an Indonesian culture (the dot was read as a thousands separator, 3711) and gave 0.37 elsewhere. v2.0 reads the text with `CultureInfo.InvariantCulture`, so every PC gets the same number, and a unit test runs the parser under three cultures.
 
-## 7. Why Windows Forms on .NET Framework 4.7.2?
+## 7. Why WPF with WPF-UI on .NET 10?
 
-The roaster PC is Windows, the chart control (`System.Windows.Forms.DataVisualization`), `SerialPort` and ClickOnce are all built in, and no runtime has to be installed on Windows 10 or 11. The trade-off is that the app is Windows-only and Excel Interop needs Excel (ADR-005).
+A real Fluent look (cards, Mica, light and dark theme) comes with WPF-UI; imitating it in Windows Forms means drawing every control by hand. .NET 10 is supported for years, has correct high-DPI behaviour and publishes as one self-contained file. The `Chart` control of v1 does not exist there, so the chart is ScottPlot. The trade-offs are Windows-only and a 74 MB file (ADR-006).
 
 ## 8. Why Excel for profiles and export?
 
-Roasters already keep profiles and logs in spreadsheets. ExcelDataReader reads `.xls` and `.xlsx` without Excel installed; the export uses Excel Interop and does need it. A CSV export would remove that dependency.
+Roasters already keep profiles and logs in spreadsheets. ExcelDataReader reads `.xls` and `.xlsx` without Excel installed; the export writes `.xlsx` with ClosedXML, also without Excel. A CSV export could be added later.
 
 ## 9. Is the system safe?
 
 It has several layers: relays default off, the 250 °C stop, the `s` command and the over-time end of heating mode. It is not a certified safety system: there is no hardware over-temperature cut-off in the repository and the firmware depends on the PC link for `s`. Treat it as a prototype and keep an operator at the machine.
 
-## 10. What does "Release.rar", "UpgradeLog*.htm" and the `.pfx` in the repository mean?
+## 10. What happened to `Release.rar`, `UpgradeLog*.htm` and the `.pfx` of v1?
 
-`UpgradeLog*.htm` are Visual Studio project-upgrade reports, `Release.rar` is an archived build, and `CoffeeRoasto_GUI_TemporaryKey.pfx` is the temporary certificate Visual Studio creates for ClickOnce signing. None is needed to build; the `.gitignore` of the project already excludes build output.
+They were Visual Studio leftovers: project-upgrade reports, an archived build and the temporary ClickOnce signing certificate. None is needed to build and none is in git any more; the local copies are in the ignored `archive/` folder.
 
 ## 11. What would be the next improvements?
 - Fix the PID (use a real previous error and `KD`) and re-tune on the machine
-- Parse with the invariant culture and remove the division
-- Add a newline to every command, or switch the firmware to `Serial.read()`
-- Marshal all lamp and message updates to the UI thread
+- Add a newline to every command, or switch the firmware to `Serial.read()` (known limitation 4)
 - Remove or implement AUTO MODE
-- Log roasts (date, beans, weight) and export CSV
+- A cancel button for the profile transfer
+- Log roasts (date, beans, weight) next to the temperature export
+- Roast phase markers (drying, first crack) on the chart

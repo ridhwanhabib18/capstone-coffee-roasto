@@ -1,68 +1,66 @@
 # Build, install and operate
 
-How to build the GUI, flash the firmware and run a roast. The design behind it is in the [system design](system-design.md); the wiring is in the [hardware guide](hardware.md).
+How to build Coffee Roasto v2.0, flash the firmware and run a roast. The design behind it is in the [system design](system-design.md); the wiring is in the [hardware guide](hardware.md).
 
 ## What you need
-- A Windows PC with a USB port, **.NET Framework 4.7.2** (included in Windows 10/11) and, for the EXPORT button, **Microsoft Excel**.
-- To build the GUI: **Visual Studio 2017 or newer** with the ".NET desktop development" workload, and NuGet access (ExcelDataReader 3.6.0, ExcelDataReader.DataSet 3.6.0, Microsoft.Office.Interop.Excel 15.0.4795.1000, System.Runtime.Extensions 4.3.1).
-- To flash the firmware: the **Arduino IDE** and the `MAX6675` library (the `Servo` library ships with the IDE).
+- A Windows PC with a USB port. **Windows 10 version 1607 or newer, 64-bit.** The published `CoffeeRoasto.exe` is self-contained: no .NET and no Excel have to be installed.
+- To build the app: the **.NET 10 SDK** (`dotnet --version` shows 10.x). Visual Studio is optional.
+- To flash the firmware: the **Arduino IDE** (or `arduino-cli`) and the `MAX6675 library` (the `Servo` library ships with the IDE).
 - The roaster wired as in the hardware guide.
-- A Windows regional format that uses a **comma as the decimal separator** (for example Indonesian). See [troubleshooting](#troubleshooting).
+- Regional settings do not matter any more: the app reads the temperatures with the invariant culture.
 
 ## Steps
 
 ### 1. Flash the firmware
 1. Open `firmware/Program_PID_CP/Program_PID_CP.ino`. The other `.ino` files and the `.h` files in that folder open as tabs of the same sketch. To only check that it compiles: `arduino-cli compile --fqbn arduino:avr:uno firmware/Program_PID_CP`.
 2. Select the board and port, then Upload.
-3. Open the serial monitor at 9600 baud. After a few seconds a frame like `@37.11A38.67B0C` should appear every ~4 s. Close the monitor before starting the GUI (only one program can hold the port).
+3. Open the serial monitor at 9600 baud. After a few seconds a frame like `@37.11A38.67B0C` should appear every ~4 s. Close the monitor before starting the app (only one program can hold the port).
 
-### 2. Install or build the GUI
-Install: run `installer/setup.exe` (ClickOnce). `autorun.inf` starts it when the folder is on a CD or USB stick.
+### 2. Get the app
+**Use the published file.** Copy `installer/dist/CoffeeRoasto.exe` to the PC and run it (about 74 MB, no installer).
 
-Build:
-```bash
-cd gui
-nuget restore CoffeeRoasto_GUI.sln
-msbuild CoffeeRoasto_GUI.sln /p:Configuration=Release
-# output: bin/Release/CoffeeRoasto_GUI.exe (+ ExcelDataReader DLLs next to it)
+**Or build it yourself:**
+```powershell
+./check.ps1                  # restore, build, 32 tests, firmware simulation
+./installer/publish.ps1      # writes installer/dist/CoffeeRoasto.exe
+dotnet run --project src/CoffeeRoasto.App -c Release    # run it without publishing
 ```
-Run it from `bin/Release` with its DLLs; the app does not need the `profiles` folder, it only offers sample profiles.
+`check.ps1` restores first and on its own: restoring and building the WPF project in one `dotnet build` can fail on a clean checkout.
 
 ### 3. Run a roast
-1. Start Coffee Roasto, open the COM PORT list, pick the board, press **CONNECT**. The bar fills and the controls turn on.
-2. Check the readings against a known temperature and that every lamp is dim green.
-3. Optional pre-heat: **HEATING MODE ON**. Wait for "Heating Selesai" (10 minutes).
-4. Press **PID MODE ON**, then **BROWSE**, pick the profile file and the sheet, and press **START**.
-5. Press **RECORD DATA START** if you want a log; press **STOP** when done, then **EXPORT**.
-6. When "Roasting Selesai" appears the cooler runs and the drum keeps turning; stop them with the OFF buttons after the beans are out.
-7. **DISCONNECT** before closing.
+1. Start Coffee Roasto, choose the board in **COM port** (press the refresh button if it is missing) and press **Connect**. The status pill turns green and the control cards switch on.
+2. Check the readings against a known temperature and that every lamp is grey.
+3. Optional pre-heat: **Heating mode ON**. A toast says "Heating finished" after 10 minutes.
+4. Press **PID mode ON**, then **Browse**, choose the profile file and the sheet, and press **Send profile**.
+5. Press **Start** in the data card if you want a log; press **Stop** when done, then **Export** and choose where to save the `.xlsx`.
+6. When the toast "Roasting finished" appears the cooler runs and the drum keeps turning; stop them with the OFF buttons after the beans are out.
+7. **Disconnect** before closing.
 
-To abort at any moment press the OFF button of the running mode (sends `s`).
+The **Dark** button switches the theme; the chart follows it. To abort at any moment press the OFF button of the running mode (sends `s`).
 
 ### Profile file format
 An `.xls` or `.xlsx` workbook; every sheet that has a header cell exactly `beantemperature` is offered. Each row below the header is one set point in °C, one per ~4 s. Blank cells and a profile shorter than a multiple of ten end the roast (set point 0). Samples: `profiles/`.
 
 ## Verification checklist
 - [ ] Serial monitor shows frames every ~4 s at 9600 baud
-- [ ] GUI shows the same values as the monitor (not 0.37 for 37)
+- [ ] The app shows the same values as the monitor
 - [ ] Each manual button toggles the right relay and lamp (burner disconnected)
 - [ ] OFF of a running mode stops the outputs
-- [ ] With a simulated bean value ≥ 250 °C, PID mode ends with `X`
-- [ ] EXPORT opens Excel with headers and rows
+- [ ] With a simulated bean value ≥ 250 °C, PID mode ends with the toast "Roasting finished"
+- [ ] Export opens an `.xlsx` with all samples (check the last row)
+- [ ] The theme switch makes the whole window, chart included, dark and back
 
 ## Troubleshooting
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| Port not in the list | Cable or driver; list is read when the drop-down opens | Replug, open the list again, install the CH340/FTDI driver |
+| Port not in the list | Cable or driver; the list is read at start and by the refresh button | Replug, press refresh, install the CH340/FTDI driver |
 | "Access to the port is denied" | Serial monitor or another program holds the port | Close it |
-| Temperatures 100 times too small (0.37) | PC culture uses a dot as decimal separator | Change the Windows regional format, or parse with the invariant culture and drop `/ 100` |
-| Controls stay grey | Not connected | Press CONNECT |
+| Control cards stay grey | Not connected | Press Connect |
 | Buttons react after about a second | Commands have no newline, the firmware waits for its read timeout | Expected (system design, limitation 4) |
-| AUTO MODE does nothing | The firmware has no handler for `m` | Use PID MODE |
-| Chart empty after START of a profile | PID mode was not on | Press PID MODE ON first |
-| Build error MSB3482 "Failed to sign ... app.publish" | The ClickOnce signing certificate (`gui/CoffeeRoasto_GUI_TemporaryKey.pfx`, not in git) is not in the Windows certificate store | Build with `-p:SignManifests=false`, or in Visual Studio open Project → Properties → Signing and create a new test certificate |
-| EXPORT fails | Excel not installed | Install Excel, or copy the data table by hand |
-| "Roasting Selesai" right after pressing heating OFF | Message is shown on the button press | Expected (limitation 7) |
+| AUTO MODE does nothing | The firmware has no handler for `m` | Use PID mode |
+| Chart empty after Send profile | PID mode was not on | Press PID mode ON first |
+| The window is not on the Windows 10 look (no Mica) | Mica needs Windows 11; Windows 10 shows a plain background | Expected, everything else works |
+| `dotnet build` fails with missing `.g.cs` files | Restore and build in one command on a clean checkout | `dotnet restore CoffeeRoasto.slnx`, then `dotnet build --no-restore`, or use `check.ps1` |
 
 ## Releasing
-After a change, rebuild in Release, republish through Visual Studio (Build → Publish) to refresh `setup.exe` and `CoffeeRoasto_GUI.application`, and test with the checklist above. Keep `bin/`, `obj/`, `.vs/`, `packages/` and the `.pfx` out of version control.
+Raise `<Version>` in both `.csproj` files and `<AssemblyTitle>` of the app, run `./check.ps1`, run `./installer/publish.ps1`, start the new `CoffeeRoasto.exe` and go through the checklist above. `installer/dist/`, `bin/` and `obj/` are not in git. The v1.0 ClickOnce installer is only kept for reference in `installer/v1-clickonce/`.

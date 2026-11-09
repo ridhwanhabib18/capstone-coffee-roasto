@@ -22,30 +22,30 @@ Kp = 21,095, Ki = 0,2, Kd = 30 berasal dari simulasi MATLAB mesin. Keluaran diba
 
 Arduino memakai array tetap (`Array_suhu[15]`) dan buffer serial 64 byte, dan memakai satu set point per pembacaan rata-rata (~4 detik). Sepuluh nilai habis dalam ~40 detik, jadi GUI mengirim kelompok berikutnya tepat saat yang terakhir terpakai. Firmware menyimpan buffer kedua agar baris baru tidak menimpa nilai yang masih dipakai. Mengirim seluruh profil sekaligus akan melebihi keduanya.
 
-## 6. Mengapa GUI membagi pembacaan dengan 100?
+## 6. Mengapa aplikasi membaca suhu dengan invariant culture?
 
-Bukan untuk mengubah skala: di PC berlokal Indonesia `Convert.ToDouble("37.11")` membaca titik sebagai pemisah ribuan dan menghasilkan 3711, sehingga pembagian mengembalikan 37,11. Di PC berlokal Inggris kode yang sama menghasilkan 0,37. Perbaikan yang kuat: `double.Parse(s, CultureInfo.InvariantCulture)` tanpa pembagian.
+Firmware mencetak titik (`37.11`). v1 memakai `Convert.ToDouble(...) / 100`, yang hanya menghasilkan 37,11 di PC berlokal Indonesia (titik dibaca sebagai pemisah ribuan, 3711) dan menghasilkan 0,37 di tempat lain. v2.0 membaca teksnya dengan `CultureInfo.InvariantCulture`, sehingga semua PC mendapat angka yang sama, dan satu tes unit menjalankan parser di tiga culture.
 
-## 7. Mengapa Windows Forms di .NET Framework 4.7.2?
+## 7. Mengapa WPF dengan WPF-UI di .NET 10?
 
-PC mesin berbasis Windows, kontrol grafik (`System.Windows.Forms.DataVisualization`), `SerialPort`, dan ClickOnce sudah bawaan, dan tidak ada runtime yang perlu dipasang di Windows 10 atau 11. Kompromi: aplikasi hanya untuk Windows dan Excel Interop butuh Excel (ADR-005).
+Tampilan Fluent sungguhan (kartu, Mica, tema terang dan gelap) datang bersama WPF-UI; meniru semuanya di Windows Forms berarti menggambar tiap kontrol sendiri. .NET 10 didukung bertahun-tahun, high-DPI-nya benar, dan bisa dipublikasikan sebagai satu file self-contained. Kontrol `Chart` v1 tidak ada di sana, jadi grafiknya memakai ScottPlot. Kompromi: hanya untuk Windows dan file 74 MB (ADR-006).
 
 ## 8. Mengapa Excel untuk profil dan ekspor?
 
-Penyangrai sudah menyimpan profil dan log di spreadsheet. ExcelDataReader membaca `.xls` dan `.xlsx` tanpa Excel terpasang; ekspor memakai Excel Interop dan memang butuh Excel. Ekspor CSV akan menghapus ketergantungan itu.
+Penyangrai sudah menyimpan profil dan log di spreadsheet. ExcelDataReader membaca `.xls` dan `.xlsx` tanpa Excel terpasang; ekspor menulis `.xlsx` dengan ClosedXML, juga tanpa Excel. Ekspor CSV bisa ditambahkan nanti.
 
 ## 9. Apakah sistem ini aman?
 
 Ada beberapa lapis: relay default mati, batas 250 °C, perintah `s`, dan berakhirnya mode heating karena waktu. Ini bukan sistem keselamatan tersertifikasi: tidak ada pemutus suhu lebih berbasis hardware di repositori dan firmware bergantung pada hubungan PC untuk `s`. Anggap sebagai prototipe dan tetap awasi mesin.
 
-## 10. Apa arti "Release.rar", "UpgradeLog*.htm", dan `.pfx` di repositori?
+## 10. Apa yang terjadi pada `Release.rar`, `UpgradeLog*.htm`, dan `.pfx` v1?
 
-`UpgradeLog*.htm` adalah laporan upgrade proyek Visual Studio, `Release.rar` adalah arsip build, dan `CoffeeRoasto_GUI_TemporaryKey.pfx` adalah sertifikat sementara yang dibuat Visual Studio untuk penandatanganan ClickOnce. Tidak ada yang dibutuhkan untuk build; `.gitignore` proyek sudah mengecualikan hasil build.
+Itu sisa Visual Studio: laporan upgrade proyek, arsip build, dan sertifikat penandatanganan ClickOnce sementara. Tidak ada yang dibutuhkan untuk build dan tidak ada lagi di git; salinan lokalnya ada di folder `archive/` yang diabaikan.
 
 ## 11. Apa perbaikan berikutnya?
 - Perbaiki PID (pakai error sebelumnya yang sebenarnya dan `KD`) dan tuning ulang di mesin
-- Parse dengan invariant culture dan hapus pembagian
-- Tambahkan newline pada tiap perintah, atau ganti firmware ke `Serial.read()`
-- Alihkan semua pembaruan lampu dan pesan ke thread UI
+- Tambahkan newline pada tiap perintah, atau ganti firmware ke `Serial.read()` (keterbatasan 4)
 - Hapus atau implementasikan AUTO MODE
-- Catat roasting (tanggal, biji, berat) dan ekspor CSV
+- Tombol batal untuk pengiriman profil
+- Catat roasting (tanggal, biji, berat) di samping ekspor suhu
+- Penanda fase roasting (drying, first crack) di grafik

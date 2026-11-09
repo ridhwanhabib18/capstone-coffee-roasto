@@ -2,7 +2,7 @@
 
 9 Nov 2026 · @M Ridhwan Habib A
 
-Kontrak antara GUI Coffee Roasto (`Form1.cs`) dan firmware Arduino (`Program_PID_CP.ino`). Isinya diturunkan dari kode kedua sisi; ubah keduanya dan halaman ini bersamaan (ADR-001).
+Kontrak antara Coffee Roasto v2.0 (`RoasterCommand`, `RoasterLink`, dan `FrameParser` di `CoffeeRoasto.Core`) dan firmware Arduino (`Program_PID_CP.ino`). Isinya diturunkan dari kode kedua sisi; ubah keduanya dan halaman ini bersamaan (ADR-001).
 
 **Koneksi:** serial USB, 9600 baud, 8N1 (bawaan .NET dan Arduino), teks ASCII. Firmware membaca satu baris dengan `Serial.readStringUntil('\n')`.
 
@@ -45,9 +45,9 @@ Kontrak antara GUI Coffee Roasto (`Form1.cs`) dan firmware Arduino (`Program_PID
 | `<drum>` | Suhu drum, terkalibrasi, °C | `drumSensor` (CS 4) |
 | `<reference>` | Set point saat ini, °C; `0` bila tidak ada | `roaster.setpoint` |
 
-Satu frame dikirim per pembacaan rata-rata: 4 sampel tiap 1 detik, jadi **satu frame tiap ~4 detik**. GUI mencari penanda `@`, `A`, `B`, `C` dengan `IndexOf`, mengubah tiap field dengan `Convert.ToDouble(...) / 100` (lihat catatan pemisah desimal) lalu memplotnya. Frame yang penandanya kurang diabaikan.
+Satu frame dikirim per pembacaan rata-rata: 4 sampel tiap 1 detik, jadi **satu frame tiap ~4 detik**. `FrameParser` mencari penanda `@`, `A`, `B`, `C`, membaca tiap field sebagai angka, lalu meneruskan pembacaannya. Frame yang penandanya kurang atau angkanya rusak diabaikan.
 
-> **Pemisah desimal.** Firmware mencetak nilai dengan titik (`37.11`). GUI membagi 100 karena berjalan di Windows berlokal Indonesia, tempat `Convert.ToDouble("37.11")` membaca titik sebagai pemisah ribuan (= 3711 → 37.11). Di PC berlokal Inggris kode yang sama menghasilkan 0.37. Gunakan PC berlokal Indonesia (desimal koma), atau perbaiki parser (bagian 10 desain sistem).
+> **Pemisah desimal.** Firmware mencetak nilai dengan titik (`37.11`). v2.0 membacanya dengan invariant culture, sehingga hasilnya tidak lagi bergantung pada pengaturan regional PC. (Aplikasi v1 membagi 100 dan hanya benar di PC berlokal Indonesia.)
 
 ### Baris kejadian
 

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CoffeeRoasto.App/CoffeeRoasto.App.csproj" />
+    <Project Path="src/CoffeeRoasto.Core/CoffeeRoasto.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CoffeeRoasto.Tests/CoffeeRoasto.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/" />
+  <Folder Name="/tools/screenshots/">
+    <Project Path="tools/screenshots/Screenshots.csproj" />
+  </Folder>
+</Solution>

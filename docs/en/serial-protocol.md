@@ -2,7 +2,7 @@
 
 Nov 9, 2026 · @M Ridhwan Habib A
 
-The contract between the Coffee Roasto GUI (`Form1.cs`) and the Arduino firmware (`Program_PID_CP.ino`). It is derived from the code of both sides; change both and this page together (ADR-001).
+The contract between Coffee Roasto v2.0 (`RoasterCommand`, `RoasterLink` and `FrameParser` in `CoffeeRoasto.Core`) and the Arduino firmware (`Program_PID_CP.ino`). It is derived from the code of both sides; change both and this page together (ADR-001).
 
 **Link:** USB serial, 9600 baud, 8N1 (the .NET and Arduino defaults), ASCII text. The firmware reads a line with `Serial.readStringUntil('\n')`.
 
@@ -45,9 +45,9 @@ The contract between the Coffee Roasto GUI (`Form1.cs`) and the Arduino firmware
 | `<drum>` | Drum temperature, calibrated, °C | `drumSensor` (CS 4) |
 | `<reference>` | Current set point, °C; `0` when none | `roaster.setpoint` |
 
-One frame is sent per averaged reading: 4 samples at 1 s each, so **one frame every ~4 s**. The GUI finds the markers `@`, `A`, `B`, `C` with `IndexOf`, converts each field with `Convert.ToDouble(...) / 100` (see the decimal-separator note below) and plots it. A frame with a missing marker is ignored.
+One frame is sent per averaged reading: 4 samples at 1 s each, so **one frame every ~4 s**. `FrameParser` finds the markers `@`, `A`, `B`, `C`, reads each field as a number and passes the reading on. A frame with a missing marker or a damaged number is ignored.
 
-> **Decimal separator.** The firmware prints values with a dot (`37.11`). The GUI divides by 100 because it runs on an Indonesian Windows where `Convert.ToDouble("37.11")` reads the dot as a thousands separator (= 3711 → 37.11). On a PC with an English culture the same code gives 0.37. Keep the PC on an Indonesian (comma decimal) culture, or fix the parser (section 10 of the system design).
+> **Decimal separator.** The firmware prints values with a dot (`37.11`). v2.0 reads them with the invariant culture, so the result no longer depends on the regional settings of the PC. (The v1 app divided by 100 and only worked on a PC with an Indonesian culture.)
 
 ### Event lines
 

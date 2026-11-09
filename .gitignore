@@ -20,3 +20,8 @@ UpgradeLog*.htm
 tests/**/out/
 tools/**/out/
 docs/assets/screenshots/_frames/
+
+# Build and publish output
+installer/dist/
+*.slnx.user
+.vs/

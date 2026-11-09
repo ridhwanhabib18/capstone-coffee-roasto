@@ -2,7 +2,7 @@
 
 Nov 9, 2026 · @M Ridhwan Habib A
 
-Coffee Roasto has two programs: a Windows Forms desktop app and an Arduino firmware, connected by a USB serial cable. The firmware owns the real-time control loop; the app supervises, plots and records. This document describes the system as built, from the code in the repository.
+Coffee Roasto v2.0 has two programs: a WPF desktop app on .NET 10 and an Arduino firmware, connected by a USB serial cable. The firmware owns the real-time control loop; the app supervises, plots and records. This document describes the system as built, from the code in the repository.
 
 ## 1. Scope & quality goals
 
@@ -12,10 +12,10 @@ The design targets one roaster, one operator at a time, on a Windows PC next to 
 | --- | --- | --- |
 | Safety | Burner never stays on after a stop or an over-temperature | Relays idle off, `s` command, hard stop at 250 °C in firmware |
 | Control quality | Bean temperature follows the profile | PID on the board, set point updated every ~4 s |
-| Responsiveness | New reading shown within a second of arriving | Serial event + `BeginInvoke` to the UI thread |
+| Responsiveness | New reading shown within a second of arriving | Serial event, then `Dispatcher.BeginInvoke` to the UI thread |
 | Robustness | App never crashes on a bad frame or an unplugged cable | `try/catch` around parsing and serial writes |
-| Simplicity | Operator needs no setup beyond the COM port | One screen, one button per action |
-| Maintainability | Both sides readable by students | Single-character protocol, one `Form1.cs`, one `.ino` |
+| Simplicity | Operator needs no setup beyond the COM port | One window, one button per action, one `.exe` without installer |
+| Maintainability | Both sides readable by students | Single-character protocol; `Core` without a screen, a view model, a thin window; one small tab per job in the firmware |
 
 **Architecture style:** supervisory GUI plus embedded controller. The controller does not depend on the PC to stay safe once a mode is running, apart from the `s` command and the profile feed.
 
@@ -26,7 +26,7 @@ The design targets one roaster, one operator at a time, on a Windows PC next to 
 flowchart LR
   operator([Operator])
 
-  gui["<b>Coffee Roasto GUI</b><br/>Windows Forms app<br/>Monitor, record, control"]
+  gui["<b>Coffee Roasto v2.0</b><br/>WPF app on .NET 10<br/>Monitor, record, control"]
   fw["<b>Arduino firmware</b><br/>Sensor sampling, PID,<br/>relay and valve control"]
   roaster["Roaster hardware<br/>Burner, drum motor, blower,<br/>cooler, gas valve, thermocouples"]
   excel["Excel files<br/>Reference profile in,<br/>recorded data out"]
@@ -36,74 +36,69 @@ flowchart LR
   fw --> roaster
   roaster -->|bean and drum temperature| fw
   excel -->|ExcelDataReader| gui
-  gui -->|Excel Interop| excel
+  gui -->|ClosedXML| excel
 ```
 
 ## 3. Components
 
+The app is a WPF window on top of a library that has no screen. The view model is the only thing the window talks to; `Core` can be read and tested alone.
+
 ```mermaid
 %% Source: diagrams/components.mmd
 flowchart TB
-  subgraph pc["Windows PC"]
-    form["Form_CoffeeRoasto (Form1.*.cs)<br/>buttons, lamps, labels"]
-    chart["Temperature chart<br/>Bean, Drum, Reference series"]
-    grid["DataGridView<br/>recorded data or profile sheet"]
-    list["List&lt;Coffee&gt;<br/>recorded samples"]
-    bw["BackgroundWorker<br/>sends profile in groups of 10"]
-    port["SerialPort (9600)"]
-    xlsread["ExcelDataReader<br/>reads beantemperature column"]
-    xlswrite["Excel Interop<br/>export"]
+  subgraph pc["Windows PC (.NET 10)"]
+    subgraph app["CoffeeRoasto.App (WPF, Fluent)"]
+      window["MainWindow<br/>cards, KPI tiles, buttons, toasts"]
+      plot["ScottPlot chart"]
+      vm["MainViewModel<br/>commands, readings, lamps"]
+    end
+    subgraph core["CoffeeRoasto.Core (no screen)"]
+      link["RoasterLink<br/>SerialPort, 9600 baud"]
+      parser["FrameParser"]
+      transmitter["ProfileTransmitter<br/>groups of 10, 40 s apart"]
+      reader["ProfileReader<br/>ExcelDataReader"]
+      recording["RecordingSession<br/>ExcelExporter (ClosedXML)"]
+    end
   end
 
   subgraph board["Arduino"]
-    parser["Command parser<br/>one character per command"]
+    cmd["Command parser<br/>one character per command"]
     sampler["readTemperature()<br/>4 samples, average, calibrate"]
     pid["PID loop<br/>q (auto), h (heating)"]
     outputs["Relays: burner, drum motor,<br/>blower, cooler<br/>Servo: gas valve"]
     max["2 x MAX6675"]
   end
 
-  form --> chart
-  form --> grid
-  form --> list
-  form --> bw
-  form --> port
-  xlsread --> grid
-  grid --> xlswrite
-  bw --> port
-  port <-->|serial| parser
-  parser --> pid
+  window <--> vm
+  vm --> plot
+  vm --> link
+  vm --> transmitter
+  vm --> reader
+  vm --> recording
+  link --> parser
+  transmitter --> link
+  link <-->|serial| cmd
+  cmd --> pid
   max --> sampler
   sampler --> pid
   pid --> outputs
-  sampler -->|"@bean A drum B ref C"| port
+  sampler -->|"@bean A drum B ref C"| link
 ```
-
-The GUI is one screen (`Form_CoffeeRoasto`, split over several partial files) and a handful of small classes with one job each. Only `UI/` knows the screen, so `Hardware/` and `Profiles/` can be read and tested alone.
 
 | Folder / file | Class | Responsibility |
 | --- | --- | --- |
-| `Form1.cs` | `Form_CoffeeRoasto` | Builds the helper objects, handles incoming lines (telemetry and events) |
-| `Form1.Connection.cs` | (partial) | COM port list, connect, disconnect, enable or disable the controls |
-| `Form1.Manual.cs` | (partial) | Burner, drum motor, blower, cooler, valve buttons; manual set point |
-| `Form1.Modes.cs` | (partial) | Heating, auto and PID start/stop and their lamps |
-| `Form1.Recording.cs` | (partial) | Record start/stop, export |
-| `Form1.Profile.cs` | (partial) | Browse a profile, choose a sheet, send it |
-| `Form1.Theme.cs` | (partial) | Colours, fonts, the header with the connection badge, the card behind the manual controls, chart and table styling; only appearance |
-| `Form1.Designer.cs` | (generated) | Controls and event wiring made by the Visual Studio designer |
-| `Hardware/RoasterCommand.cs` | `RoasterCommand` | The command characters, one constant each |
-| `Hardware/RoasterLink.cs` | `RoasterLink` | Serial port: open (9600 baud), close, send, read a line |
-| `Hardware/FrameParser.cs`, `ParsedLine.cs` | `FrameParser`, `ParsedLine`, `Telemetry`, `RoasterEvent` | Turns a received line into a reading or an event (pure logic) |
-| `Profiles/ProfileReader.cs` | `ProfileReader` | Reads the `beantemperature` column of every Excel sheet |
-| `Profiles/ProfileTransmitter.cs` | `ProfileTransmitter` | Sends a profile in groups of ten, 40 s apart, on a background thread |
-| `Recording/RecordingSession.cs`, `Coffee.cs` | `RecordingSession`, `Coffee` | The samples collected while recording |
-| `Recording/ExcelExporter.cs` | `ExcelExporter` | Copies the data grid to a new Excel workbook |
-| `UI/LampBoard.cs` | `LampBoard`, `Lamp` | All pilot lamps by name: `On(...)`, `Off(...)`, `AllOff()` |
-| `UI/PilotLamp.cs` | `PilotLamp` | Round shaded lamp; `BackColor` is the lamp colour (`Palette.LampOff` = off, `Palette.LampOn` = on) |
-| `UI/Palette.cs` | `Palette` | The colours and fonts of the screen and the flat button style |
-| `UI/TemperatureChart.cs` | `TemperatureChart` | The chart and its three series |
-| `UI/RoastClock.cs` | `RoastClock` | The time axis (mm:ss since connect or mode start) |
-| `Program.cs` | `Program` | Entry point |
+| `src/CoffeeRoasto.Core/Hardware/RoasterCommand.cs` | `RoasterCommand` | The command characters, one constant each |
+| `Hardware/RoasterLink.cs` | `RoasterLink` | Serial port (9600 baud): open, close, send, the `LineReceived` event |
+| `Hardware/FrameParser.cs`, `ParsedLine.cs` | `FrameParser`, `ParsedLine`, `Telemetry`, `RoasterEvent` | Turns a received line into a reading or an event; invariant culture; pure logic |
+| `Profiles/ProfileReader.cs` | `ProfileReader` | Reads the `beantemperature` column of every sheet of an `.xls` or `.xlsx` file |
+| `Profiles/ProfileTransmitter.cs` | `ProfileTransmitter` | Sends a profile in groups of ten, 40 s apart, as a background task |
+| `Recording/RecordingSession.cs` | `RecordingSession`, `Coffee` | The samples collected while recording |
+| `Recording/ExcelExporter.cs` | `ExcelExporter` | Writes a recording to an `.xlsx` file with ClosedXML; Excel does not have to be installed |
+| `src/CoffeeRoasto.App/ViewModels/MainViewModel.cs` | `MainViewModel` | Everything the window shows (readings, delta, rate of rise, lamps, table) and every command behind a button |
+| `ViewModels/TemperatureHistory.cs` | `TemperatureHistory` | The points of the chart; raises `Changed` |
+| `MainWindow.xaml`, `.xaml.cs` | `MainWindow` | The Fluent window (WPF-UI): layout, light and dark theme, ScottPlot chart, file dialogs, toasts |
+| `Controls/LampIndicator.xaml`, `KpiTile.xaml` | `LampIndicator`, `KpiTile` | The round lamp with a halo and the card with one reading |
+| `App.xaml`, `App.xaml.cs` | `App` | Start-up, the Fluent theme dictionaries, the colours of the three lines |
 | firmware `Program_PID_CP.ino` | | `setup()` and `loop()`: read a command, read the sensors, dispatch to a mode |
 | firmware `Config.h`, `Commands.h`, `Globals.h` | | Pins and limits, protocol characters, shared objects |
 | firmware `Actuators.ino` | | Relays, valve servo, burner switching by PID output |
@@ -113,7 +108,7 @@ The GUI is one screen (`Form_CoffeeRoasto`, split over several partial files) an
 | firmware `ManualMode.ino` | | One command per output, typed set point, manual burner hold |
 | firmware `PidMode.ino`, `HeatingMode.ino` | | The two loops that run until done, stopped or over-temperature |
 
-Dependencies point one way: `Form1.*` uses `Hardware`, `Profiles`, `Recording` and `UI`; `Profiles` uses `Hardware`. `Hardware`, `Profiles` and `Recording` do not reference the form.
+Dependencies point one way: `MainWindow` uses `MainViewModel`; the view model uses `Core`; `Core` does not know the window. The tests and the screenshot tool use the view model without a window.
 
 ## 4. Runtime view
 
@@ -122,22 +117,24 @@ Dependencies point one way: `Form1.*` uses `Hardware`, `Profiles`, `Recording` a
 %% Source: diagrams/sequences/telemetry.mmd
 sequenceDiagram
   actor Op as Operator
-  participant GUI as Coffee Roasto GUI
+  participant UI as MainWindow
+  participant VM as MainViewModel
+  participant Link as RoasterLink
   participant FW as Arduino firmware
-  participant TC as MAX6675 x2
 
-  Op->>GUI: Pick COM port, press CONNECT
-  GUI->>FW: open port 9600, send "#"
+  Op->>UI: Choose a COM port, press Connect
+  UI->>VM: ConnectCommand
+  VM->>Link: Open(port) and send "#"
   Note over FW: "#" is not a command, so it is read as set point 0 (clears old state)
-  loop every 1 s
-    FW->>TC: readCelsius()
+  loop every ~4 s (4 samples of 1 s, averaged)
+    FW-->>Link: @37.11A38.67B0C
+    Link-->>VM: LineReceived (serial thread)
+    VM->>VM: Post to the UI thread, FrameParser.Parse (invariant culture)
+    VM-->>UI: readings, delta, rate of rise, elapsed
+    VM-->>UI: History.Changed, the chart is redrawn
   end
-  Note over FW: after 4 samples: average, calibrate, 0.25 C dead band
-  FW-->>GUI: @37.11A38.67B0C
-  GUI->>GUI: parse, divide by 100, BeginInvoke(HandleLine)
-  GUI-->>Op: labels and chart updated
   opt recording is on
-    GUI->>GUI: add Coffee(bean, drum) to the list
+    VM->>VM: RecordingSession.Add(bean, drum, reference, seconds)
   end
 ```
 
@@ -206,37 +203,39 @@ stateDiagram-v2
 
 | Data | Where | Form |
 | --- | --- | --- |
-| Latest bean, drum, reference temperature | `beantemperature`, `drumtemperature`, `referencetemperature` in the form | `double`, °C |
-| Recording | `List<Coffee>` → `dataGridView` | In memory, cleared by START; lost on close unless exported |
-| Profile | `DataSet` from ExcelDataReader | Only the column whose header is `beantemperature`; one table per sheet |
-| Export | New Excel workbook, sheet "Exported from gridview" | Header row + one row per record |
+| Latest readings | `BeanText`, `DrumText`, `ReferenceText`, `DeltaText`, `RateText`, `ElapsedText` of the view model | Text, °C, one decimal |
+| Chart points | `TemperatureHistory` | Four lists of `double`: seconds, bean, drum, reference |
+| Recording | `RecordingSession.Samples` | In memory, cleared by START; lost on close unless exported |
+| Profile | `DataTableCollection` from ExcelDataReader | Only the column whose header is `beantemperature`; one table per sheet |
+| Export | New `.xlsx`, sheet "Roast" | Header row + one row per sample: time, bean, drum, reference |
 | Sample files | `profiles/` | `.xls`, `.xlsx` profiles |
 
 There is no database and no network access.
 
 ## 8. Threading
 
-The serial `DataReceived` event runs on a pool thread and calls `RoasterLink.TryReadLine`; the line is then handed to `HandleLine` on the UI thread with `BeginInvoke`. Profile sending runs on a `BackgroundWorker` and sleeps 40 s between groups, so the UI stays responsive. Parsing results, lamps, labels, the chart and message boxes are all handled on the UI thread.
+`SerialPort.DataReceived` runs on a pool thread. `RoasterLink` reads the lines there and raises `LineReceived`; the view model hands each line to the UI thread (`Post`, by default `Dispatcher.BeginInvoke`) and only then parses it and updates the screen. Profile sending is a background `Task` that waits 40 s between groups. The clock of the screen is a `DispatcherTimer` of one second. Everything the window binds to changes on the UI thread only.
 
 ## 9. Build & distribution
 
-Visual Studio solution `CoffeeRoasto_GUI.sln`, target .NET Framework 4.7.2, output type WinExe. NuGet packages: ExcelDataReader 3.6.0, ExcelDataReader.DataSet 3.6.0, Microsoft.Office.Interop.Excel 15.0.4795.1000, System.Runtime.Extensions 4.3.1. Published with ClickOnce (`setup.exe`, `CoffeeRoasto_GUI.application`, `autorun.inf` for a CD or USB stick). See the [deployment guide](deployment.md).
+`CoffeeRoasto.slnx` holds four projects: `CoffeeRoasto.Core` (net10.0), `CoffeeRoasto.App` (net10.0-windows, WPF), `CoffeeRoasto.Tests` (xUnit) and `tools/screenshots`. Packages (all MIT, BSD or Apache): WPF-UI, ScottPlot.WPF, CommunityToolkit.Mvvm, ClosedXML, ExcelDataReader (+ DataSet), System.IO.Ports, xUnit. `installer/publish.ps1` makes one self-contained, single-file `CoffeeRoasto.exe` (about 74 MB) that needs no .NET on the PC. The ClickOnce installer of v1.0 is kept in `installer/v1-clickonce/`. See the [deployment guide](deployment.md).
 
 ## 10. Known limitations
 
-These are the points where the code and the intent differ. They are listed so nobody is surprised; none is changed by this documentation.
+These are the points where the code and the intent differ. They are listed so nobody is surprised.
 
 | # | Area | Observation | Effect |
 | --- | --- | --- | --- |
 | 1 | Firmware PID | `PREVIOUS_ERROR` stays 0 and `KD` (30) is never used; the integral is `KI·e` and the derivative term is `e` | Behaves as P + small I + extra P; the MATLAB gains are not fully applied |
-| 2 | GUI parsing | `Convert.ToDouble(...) / 100` depends on the PC culture | Wrong values on an English-culture PC |
-| 3 | Auto mode `m` | The GUI sends `m` but the firmware has no handler | AUTO MODE ON does nothing useful; use PID MODE |
-| 4 | Serial framing | GUI `Write("n")` has no newline, firmware waits for `\n` | Commands arrive after the 1 s `readStringUntil` timeout |
-| 5 | Threading | ~~`Data_Parsing` changed lamps on the serial thread~~ **Fixed**: lines are handled on the UI thread | none |
+| 2 | App parsing | ~~`Convert.ToDouble(...) / 100` depended on the PC culture~~ **Fixed in v2.0**: values are read with the invariant culture | none |
+| 3 | Auto mode `m` | The app sends `m` but the firmware has no handler | AUTO MODE ON does nothing useful; use PID MODE |
+| 4 | Serial framing | The app writes a command without a newline, the firmware waits for `\n` | Commands arrive after the 1 s `readStringUntil` timeout |
+| 5 | Threading | ~~Lamps were changed on the serial thread~~ **Fixed**: lines are handled on the UI thread | none |
 | 6 | Burner ON button | ~~wrote without the `IsOpen` check~~ **Fixed**: every command goes through `RoasterLink.Send` | none |
-| 7 | Heating OFF | `button_StopHeatingMode_Click` shows "Roasting Selesai" before sending `s` | Misleading message |
-| 8 | Profile sending | Blocks 40 s between groups and cannot be cancelled from the UI | Must press OFF (`s`) to abort |
+| 7 | Heating OFF | ~~showed "Roasting Selesai" before sending `s`~~ **Fixed in v2.0**: no message | none |
+| 8 | Profile sending | Waits 40 s between groups and has no cancel button; OFF stops the firmware but the app keeps sending lines | Close the app or wait to abort the transfer |
 | 9 | `moveServo.ino` | Does not compile | Not used by the firmware |
-| 10 | Repository | `bin/`, `obj/`, `.vs/`, `packages/`, `Release.rar` and a signing key are in the tree | Large repository; keep out of version control |
-| 11 | Export | `Excel Interop` needs Excel installed (the skipped last row is **fixed**) | Fails on a PC without Excel |
+| 10 | Repository | ~~build output and a signing key were in the tree~~ **Fixed**: ignored by git, v1 files in `archive/` and `installer/v1-clickonce/` | none |
+| 11 | Export | ~~needed Excel and skipped the last row~~ **Fixed in v2.0**: ClosedXML writes the `.xlsx`, every sample is exported | none |
 | 12 | Profile end | With no new line the firmware reuses the last group of ten, and only an empty value ends the roast | A profile with a multiple of ten rows never ends by itself; press OFF or wait for 250 °C |
+| 13 | Build | `dotnet build` that restores and builds the WPF project in one command can fail on a clean checkout | Run `dotnet restore` first, or use `check.ps1` |

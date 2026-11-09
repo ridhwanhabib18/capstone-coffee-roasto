@@ -1,6 +1,6 @@
 # ADR-005: Windows Forms di .NET Framework dengan ClickOnce
 
-- Status: Diterima
+- Status: Digantikan oleh [ADR-006](006-wpf-on-dotnet-10.md) (v2.0)
 - Tanggal: 2026-11-09
 
 ## Konteks

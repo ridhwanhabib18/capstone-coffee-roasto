@@ -1,4 +1,4 @@
-# Coffee Roasto Requirements (as built)
+# Coffee Roasto v2.0 Requirements (as built)
 
 Nov 9, 2026 · @M Ridhwan Habib A
 
@@ -81,9 +81,9 @@ Each item names the control it belongs to.
 | Area | Requirement |
 | --- | --- |
 | Safety | All outputs off at power-up; stop at 250 °C; relays active LOW |
-| Platform | Windows, .NET Framework 4.7.2; Arduino AVR board at 9600 baud |
-| Locale | PC culture with comma decimal separator (see limitations in the system design) |
-| Dependencies | Excel installed for EXPORT |
+| Platform | Windows 10 (1607) or newer, 64-bit, .NET 10 (self-contained); Arduino AVR board at 9600 baud |
+| Locale | Any regional setting: the app reads the firmware's dot with the invariant culture |
+| Dependencies | None on the PC; Excel is not needed for export |
 | Offline | Works without a network |
 | Language | UI in English with two Indonesian message boxes ("Roasting Selesai", "Heating Selesai") |
 
@@ -109,11 +109,11 @@ Each item names the control it belongs to.
 | Heating mode | Done |
 | PID mode and profile from Excel | Done (see known limitations 1 and 8) |
 | Auto mode `m` | GUI only; no firmware handler |
-| Recording and export | Done (needs Excel) |
+| Recording and export | Done (`.xlsx` with ClosedXML) |
 | Servo ramp (`moveServo.ino`) | Draft, does not compile |
 
 ## 8. Open questions
 1. Should AUTO MODE (`m`) be removed from the GUI, or implemented in the firmware?
 2. Are Kd = 30 and the previous-error term meant to be active (known limitation 1)?
-3. Should the temperature parser use `CultureInfo.InvariantCulture` instead of relying on the PC locale?
+3. ~~Should the temperature parser use the invariant culture?~~ Done in v2.0.
 4. Is a roast log (date, bean type, weight, result) needed next to the temperature export?

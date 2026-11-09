@@ -1,34 +1,38 @@
 flowchart TB
-  subgraph pc["Windows PC"]
-    form["Form_CoffeeRoasto (Form1.*.cs)<br/>buttons, lamps, labels"]
-    chart["Temperature chart<br/>Bean, Drum, Reference series"]
-    grid["DataGridView<br/>recorded data or profile sheet"]
-    list["List&lt;Coffee&gt;<br/>recorded samples"]
-    bw["BackgroundWorker<br/>sends profile in groups of 10"]
-    port["SerialPort (9600)"]
-    xlsread["ExcelDataReader<br/>reads beantemperature column"]
-    xlswrite["Excel Interop<br/>export"]
+  subgraph pc["Windows PC (.NET 10)"]
+    subgraph app["CoffeeRoasto.App (WPF, Fluent)"]
+      window["MainWindow<br/>cards, KPI tiles, buttons, toasts"]
+      plot["ScottPlot chart"]
+      vm["MainViewModel<br/>commands, readings, lamps"]
+    end
+    subgraph core["CoffeeRoasto.Core (no screen)"]
+      link["RoasterLink<br/>SerialPort, 9600 baud"]
+      parser["FrameParser"]
+      transmitter["ProfileTransmitter<br/>groups of 10, 40 s apart"]
+      reader["ProfileReader<br/>ExcelDataReader"]
+      recording["RecordingSession<br/>ExcelExporter (ClosedXML)"]
+    end
   end
 
   subgraph board["Arduino"]
-    parser["Command parser<br/>one character per command"]
+    cmd["Command parser<br/>one character per command"]
     sampler["readTemperature()<br/>4 samples, average, calibrate"]
     pid["PID loop<br/>q (auto), h (heating)"]
     outputs["Relays: burner, drum motor,<br/>blower, cooler<br/>Servo: gas valve"]
     max["2 x MAX6675"]
   end
 
-  form --> chart
-  form --> grid
-  form --> list
-  form --> bw
-  form --> port
-  xlsread --> grid
-  grid --> xlswrite
-  bw --> port
-  port <-->|serial| parser
-  parser --> pid
+  window <--> vm
+  vm --> plot
+  vm --> link
+  vm --> transmitter
+  vm --> reader
+  vm --> recording
+  link --> parser
+  transmitter --> link
+  link <-->|serial| cmd
+  cmd --> pid
   max --> sampler
   sampler --> pid
   pid --> outputs
-  sampler -->|"@bean A drum B ref C"| port
+  sampler -->|"@bean A drum B ref C"| link

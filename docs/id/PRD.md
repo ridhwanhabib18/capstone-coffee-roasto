@@ -1,4 +1,4 @@
-# Kebutuhan Coffee Roasto (sesuai yang dibangun)
+# Kebutuhan Coffee Roasto v2.0 (sesuai yang dibangun)
 
 9 Nov 2026 · @M Ridhwan Habib A
 
@@ -79,9 +79,9 @@ Ini versi bahasa Indonesia; versi Inggris adalah rujukan utama dan diperbarui be
 | Area | Kebutuhan |
 | --- | --- |
 | Keselamatan | Semua output mati saat daya hidup; berhenti di 250 °C; relay aktif LOW |
-| Platform | Windows, .NET Framework 4.7.2; board Arduino AVR 9600 baud |
-| Lokal | Kultur PC dengan pemisah desimal koma (lihat keterbatasan di desain sistem) |
-| Dependensi | Excel terpasang untuk EXPORT |
+| Platform | Windows 10 (1607) atau lebih baru, 64-bit, .NET 10 (self-contained); board Arduino AVR 9600 baud |
+| Lokal | Pengaturan regional apa pun: aplikasi membaca titik dari firmware dengan invariant culture |
+| Dependensi | Tidak ada di PC; Excel tidak diperlukan untuk ekspor |
 | Offline | Berjalan tanpa jaringan |
 | Bahasa | UI berbahasa Inggris dengan dua message box berbahasa Indonesia ("Roasting Selesai", "Heating Selesai") |
 
@@ -107,11 +107,11 @@ Ini versi bahasa Indonesia; versi Inggris adalah rujukan utama dan diperbarui be
 | Mode heating | Selesai |
 | Mode PID dan profil dari Excel | Selesai (lihat keterbatasan 1 dan 8) |
 | Auto mode `m` | Hanya di GUI; firmware tidak punya handler |
-| Perekaman dan ekspor | Selesai (butuh Excel) |
+| Perekaman dan ekspor | Selesai (`.xlsx` dengan ClosedXML) |
 | Ramp servo (`moveServo.ino`) | Draf, tidak bisa dikompilasi |
 
 ## 8. Pertanyaan terbuka
 1. Apakah AUTO MODE (`m`) dihapus dari GUI, atau diimplementasikan di firmware?
 2. Apakah Kd = 30 dan suku error sebelumnya seharusnya aktif (keterbatasan 1)?
-3. Apakah parser suhu sebaiknya memakai `CultureInfo.InvariantCulture`, bukan bergantung pada lokal PC?
+3. ~~Apakah parser suhu sebaiknya memakai invariant culture?~~ Sudah di v2.0.
 4. Apakah perlu log roasting (tanggal, jenis biji, berat, hasil) di samping ekspor suhu?

@@ -2,19 +2,20 @@
 
 9 Nov 2026 · @M Ridhwan Habib A
 
-Cara Coffee Roasto diuji tanpa mesin, apa yang dibuktikan pengujian, dan apa yang tidak bisa. Alat yang sama membuat screenshot dan animasi di README, jadi gambarnya adalah aplikasi yang sebenarnya.
+Cara Coffee Roasto v2.0 diuji tanpa mesin, apa yang dibuktikan pengujian, dan apa yang tidak bisa. Alat yang sama membuat screenshot dan animasi di README, jadi gambarnya adalah aplikasi yang sebenarnya.
 
 ## 1. Yang diuji
 
 | Lapisan | Alat | Yang diperiksa | Hasil (9 Nov 2026) |
 | --- | --- | --- | --- |
-| Logika GUI | `tests/gui-logic/run.ps1` | `FrameParser`, `ProfileTransmitter.BuildChunks` (dibandingkan dengan algoritma asli untuk 0–45 baris), `RecordingSession` | 69 pemeriksaan lolos |
+| Logika Core | `tests/CoffeeRoasto.Tests/Core` (xUnit) | `FrameParser` (juga di tiga culture), `ProfileTransmitter.BuildChunks` (dibandingkan dengan algoritma v1 untuk 0–45 baris), `ProfileReader` pada contoh `.xlsx` asli dan `.xls` lama, `RecordingSession`, ekspor Excel termasuk baris terakhirnya | lolos |
+| View model | `tests/CoffeeRoasto.Tests/ViewModels` (xUnit) | Pembacaan, selisih, dan rate of rise, lampu dan toast untuk kejadian, tombol dengan port tertutup, input yang ditolak, perekaman | lolos |
 | Firmware | `tests/firmware-sim/run.ps1` | Sketsa dijalankan di PC pada 12 skenario; perubahan pin, sudut servo, dan baris serial dibandingkan dengan `golden/` | 12 dari 12 cocok |
-| Kompilasi (GUI) | MSBuild, Release | Solution terbangun tanpa warning | lolos |
-| Kompilasi (firmware) | `arduino-cli compile --fqbn arduino:avr:uno` | Tanpa warning dengan `--warnings all`; flash 11.104 byte (34 %), RAM 334 byte (16 %) | lolos |
-| Tampilan | `tools/screenshots/run.ps1` | Jendela asli menggambar satu roasting penuh; dipakai untuk gambar di bawah | 5 screenshot, 1 GIF |
+| Kompilasi | `dotnet build`, `arduino-cli compile --fqbn arduino:avr:uno` | Tanpa warning; flash firmware 11.104 byte (34 %), RAM 334 byte (16 %) | lolos |
+| File hasil publish | `installer/publish.ps1`, lalu menjalankan `.exe` | Build single-file berjalan dan menampilkan jendelanya | lolos |
+| Tampilan | `tools/screenshots/run.ps1` | Jendela dan view model asli menggambar satu roasting penuh di tema terang dan gelap | 7 screenshot, 1 GIF |
 
-Keluaran mentah ada di [`docs/assets/testing/`](../assets/testing/).
+Total 32 tes xUnit. Keluaran mentah simulasi firmware ada di [`docs/assets/testing/`](../assets/testing/).
 
 ## 2. Simulasi firmware
 
@@ -41,25 +42,28 @@ Skenario 12 dalam angka: 458 frame data, suhu biji mulai dari 139 °C dan mengik
 
 ## 3. Screenshot dan animasi
 
-`tools/screenshots/run.ps1` membangun GUI, membuka jendela asli, dan memutar ulang skenario 12 lewat `HandleLine` seolah barisnya datang dari port serial. Hanya port serial yang tidak ada; status terhubung dan lampu yang akan diatur tombol diatur manual. Jam dikunci dengan `RoastClock.FreezeAt` supaya sumbu waktu menampilkan 29 menit. Keluaran: `docs/assets/screenshots/` dan `docs/assets/flows/pid-roast.gif`.
+`tools/screenshots/run.ps1` membuka `MainWindow` asli dengan `MainViewModel` asli dan memutar ulang skenario 12 lewat `HandleLine` seolah barisnya datang dari port serial. Hanya port serial yang tidak ada; status terhubung dan lampu yang akan diatur tombol diatur langsung. Sumbu waktu berasal dari `ElapsedProvider`, jadi menampilkan 29 menit tanpa menunggu. Keluaran: `docs/assets/screenshots/` dan `docs/assets/flows/pid-roast.gif`.
 
 | | |
 | --- | --- |
 | ![Awal](../assets/screenshots/01-start.png) | ![Terhubung](../assets/screenshots/02-connected.png) |
-| 1. Awal: semua mati sampai CONNECT | 2. Terhubung: kontrol aktif, port COM dipilih |
+| 1. Awal: semua mati sampai Connect | 2. Terhubung: kartu kontrol aktif, port COM dipilih |
 | ![Profil](../assets/screenshots/03-profile-loaded.png) | ![5 menit](../assets/screenshots/04-pid-running-05min.png) |
-| 3. File dan sheet profil dimuat ke tabel data | 4. Mode PID setelah 5 menit |
+| 3. File dan sheet profil dimuat ke kartu data | 4. Mode PID setelah 5 menit |
 | ![15 menit](../assets/screenshots/04-pid-running-15min.png) | ![Selesai](../assets/screenshots/05-roast-finished.png) |
-| 4. Mode PID setelah 15 menit: suhu biji mengikuti referensi, lampu burner mengikuti `Y` dan `Z` | 5. Roasting selesai: rekaman ada di tabel data, lampu cooler menyala |
+| 5. Setelah 15 menit: suhu biji mengikuti referensi, selisih dan rate of rise di kartu angka | 6. Roasting selesai: rekaman ada di kartu data, toast memberi tahu |
+| ![Gelap](../assets/screenshots/06-dark-theme.png) | |
+| 7. Layar yang sama di tema gelap | |
 
 ![Roasting PID](../assets/flows/pid-roast.gif)
 
 ## 4. Cara menjalankan
 
 ```powershell
-tests/gui-logic/run.ps1          # butuh Visual Studio (Roslyn) dan `nuget restore` di gui/
-tests/firmware-sim/run.ps1       # butuh Visual Studio C++ build tools (cl.exe)
-tools/screenshots/run.ps1        # butuh MSBuild; GIF butuh Python dengan Pillow
+./check.ps1                       # restore, build, semua tes xUnit, dan simulasi firmware
+./check.ps1 -Quick                # sama tanpa simulasi firmware (tidak butuh C++ build tools)
+tests/firmware-sim/run.ps1        # hanya simulasi firmware (butuh Visual Studio C++ build tools)
+tools/screenshots/run.ps1         # screenshot dan GIF; GIF butuh Python dengan Pillow
 ```
 
 Setelah perubahan perilaku firmware yang disengaja, jalankan `tests/firmware-sim/run.ps1 -Update` dan tinjau selisih `golden/` sebelum di-commit. Tambahkan prototype ke `tests/firmware-sim/prototypes.h` bila sebuah tab mendapat fungsi baru.
@@ -68,6 +72,6 @@ Setelah perubahan perilaku firmware yang disengaja, jalankan `tests/firmware-sim
 
 - Mesin sungguhan: relay, servo, termokopel, valve gas, dan perilaku termalnya. Pakai daftar pengecekan di [panduan deploy](deployment.md) dengan kompor dilepas lebih dulu.
 - Koneksi serial itu sendiri (kabel, driver, timeout). Simulasi menyerahkan baris langsung ke kode.
-- Ekspor Excel (butuh Excel) dan dialog file.
+- Dialog file Windows dan pembukaan Excel setelah ekspor; file ekspornya sendiri dibaca ulang dan diperiksa.
 - Timeout `readStringUntil` 1 detik akibat perintah tanpa newline (keterbatasan 4); simulasi mengirim baris utuh.
-- Handler event GUI itu sendiri; logikanya tipis dan diperiksa lewat screenshot.
+- Mica dan efek jendela Windows 11 lainnya; screenshot memakai latar polos.
