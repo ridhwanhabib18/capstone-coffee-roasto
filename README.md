@@ -28,6 +28,7 @@ Arduino (C++) · MAX6675 thermocouple amplifiers · Servo · USB serial (9600 ba
 - [Serial protocol](docs/en/serial-protocol.md)
 - [Hardware guide](docs/en/hardware.md)
 - [Technical Q&A](docs/en/technical-qa.md)
+- [Testing and demo](docs/en/testing.md)
 - [Build, install and operate](docs/en/deployment.md)
 - Diagrams (Mermaid): [`docs/en/diagrams/`](docs/en/diagrams/)
 
@@ -36,10 +37,29 @@ Arduino (C++) · MAX6675 thermocouple amplifiers · Servo · USB serial (9600 ba
 | --- | --- |
 | `gui/` | Visual Studio solution of the desktop app (`Form1.cs`, `Coffee.cs`, `PilotLamp.cs`) |
 | `installer/` | ClickOnce installer for the GUI (`setup.exe`, `CoffeeRoasto_GUI.application`, `autorun.inf`) |
+| `tests/` | GUI logic tests and the firmware simulation with its golden traces |
+| `tools/screenshots/` | Replays a roast through the real window and saves the screenshots |
 | `profiles/` | Sample reference temperature profiles (`.xls`, `.xlsx`) |
 | `firmware/Program_PID_CP/` | The firmware that runs on the roaster |
 | `firmware/Pengujian_Hardware/` | Relay test sketch |
 | `firmware/moveServo/` | Unfinished servo ramp sketch (does not compile, see limitations) |
+
+## Demo
+The pictures come from the real window, replaying a whole 29-minute roast that the firmware simulation produced (see [testing and demo](docs/en/testing.md)).
+
+![PID roast](docs/assets/flows/pid-roast.gif)
+
+<table>
+<tr><td align="center" valign="top"><img src="docs/assets/screenshots/03-profile-loaded.png" alt="A reference profile loaded from Excel" width="420"><br><sub>A reference profile loaded from Excel</sub></td><td align="center" valign="top"><img src="docs/assets/screenshots/04-pid-running-15min.png" alt="PID mode after 15 minutes: the bean temperature follows the reference" width="420"><br><sub>PID mode after 15 minutes: the bean temperature follows the reference</sub></td></tr>
+<tr><td align="center" valign="top"><img src="docs/assets/screenshots/05-roast-finished.png" alt="Roast finished, recording in the data table" width="420"><br><sub>Roast finished, recording in the data table</sub></td><td align="center" valign="top"><img src="docs/assets/screenshots/01-start.png" alt="Start screen, everything off until CONNECT" width="420"><br><sub>Start screen, everything off until CONNECT</sub></td></tr>
+</table>
+
+## Tests
+```powershell
+tests/gui-logic/run.ps1      # 69 checks on the parser, profile splitting and recording
+tests/firmware-sim/run.ps1   # the firmware on the PC, 12 scenarios compared with traces of the original firmware
+```
+There is no roaster in the loop: see [what is and is not tested](docs/en/testing.md#5-what-is-not-tested).
 
 ## Getting started
 Requirements: Windows with .NET Framework 4.7.2, Microsoft Excel (only for the export button), Visual Studio 2017 or

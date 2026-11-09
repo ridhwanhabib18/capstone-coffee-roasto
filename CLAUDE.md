@@ -53,4 +53,7 @@ Firmware: Arduino (AVR), `max6675` and `Servo` libraries, 9600 baud.
 - Run GUI: open the solution in Visual Studio and press F5, or run `bin/Release/CoffeeRoasto_GUI.exe`
 - Flash firmware: Arduino IDE, open `firmware/Program_PID_CP/Program_PID_CP.ino`, Upload
 - Compile-check firmware: `arduino-cli compile --fqbn arduino:avr:uno firmware/Program_PID_CP` (needs the `MAX6675 library` and `Servo` libraries)
-- There is no automated test suite; verify with the checklist in `docs/en/deployment.md`.
+- Tests (no roaster needed): `tests/gui-logic/run.ps1` and `tests/firmware-sim/run.ps1`; both must pass before a push. After a deliberate
+  firmware behaviour change, review and update `tests/firmware-sim/golden/` (see `docs/en/testing.md`).
+- Screenshots and GIF: `tools/screenshots/run.ps1` (rerun it after a visible GUI change).
+- Real-machine checks still follow the checklist in `docs/en/deployment.md`.

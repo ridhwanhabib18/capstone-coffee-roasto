@@ -29,6 +29,7 @@ Arduino (C++) · penguat termokopel MAX6675 · Servo · serial USB (9600 baud)
 - [Protokol serial](docs/id/serial-protocol.md)
 - [Panduan hardware](docs/id/hardware.md)
 - [Tanya jawab teknis](docs/id/technical-qa.md)
+- [Pengujian dan demo](docs/id/testing.md)
 - [Build, instalasi, dan operasi](docs/id/deployment.md)
 - Diagram (Mermaid): [`docs/en/diagrams/`](docs/en/diagrams/)
 
@@ -37,10 +38,29 @@ Arduino (C++) · penguat termokopel MAX6675 · Servo · serial USB (9600 baud)
 | --- | --- |
 | `gui/` | Solution Visual Studio aplikasi desktop (`Form1.cs`, `Coffee.cs`, `PilotLamp.cs`) |
 | `installer/` | Installer ClickOnce untuk GUI (`setup.exe`, `CoffeeRoasto_GUI.application`, `autorun.inf`) |
+| `tests/` | Tes logika GUI dan simulasi firmware beserta jejak emasnya |
+| `tools/screenshots/` | Memutar ulang roasting lewat jendela asli dan menyimpan screenshot |
 | `profiles/` | Contoh profil suhu referensi (`.xls`, `.xlsx`) |
 | `firmware/Program_PID_CP/` | Firmware yang berjalan di mesin |
 | `firmware/Pengujian_Hardware/` | Sketsa uji relay |
 | `firmware/moveServo/` | Sketsa ramp servo yang belum selesai (tidak bisa dikompilasi, lihat keterbatasan) |
+
+## Demo
+Gambar berasal dari jendela aplikasi asli yang memutar ulang satu roasting penuh 29 menit hasil simulasi firmware (lihat [pengujian dan demo](docs/id/testing.md)).
+
+![Roasting PID](docs/assets/flows/pid-roast.gif)
+
+<table>
+<tr><td align="center" valign="top"><img src="docs/assets/screenshots/03-profile-loaded.png" alt="Profil referensi dimuat dari Excel" width="420"><br><sub>Profil referensi dimuat dari Excel</sub></td><td align="center" valign="top"><img src="docs/assets/screenshots/04-pid-running-15min.png" alt="Mode PID setelah 15 menit: suhu biji mengikuti referensi" width="420"><br><sub>Mode PID setelah 15 menit: suhu biji mengikuti referensi</sub></td></tr>
+<tr><td align="center" valign="top"><img src="docs/assets/screenshots/05-roast-finished.png" alt="Roasting selesai, rekaman ada di tabel data" width="420"><br><sub>Roasting selesai, rekaman ada di tabel data</sub></td><td align="center" valign="top"><img src="docs/assets/screenshots/01-start.png" alt="Layar awal, semua mati sampai CONNECT" width="420"><br><sub>Layar awal, semua mati sampai CONNECT</sub></td></tr>
+</table>
+
+## Tes
+```powershell
+tests/gui-logic/run.ps1      # 69 pemeriksaan parser, pemecahan profil, dan perekaman
+tests/firmware-sim/run.ps1   # firmware di PC, 12 skenario dibandingkan dengan jejak firmware asli
+```
+Mesin sungguhan tidak ikut diuji: lihat [yang diuji dan tidak diuji](docs/id/testing.md#5-yang-tidak-diuji).
 
 ## Memulai
 Kebutuhan: Windows dengan .NET Framework 4.7.2, Microsoft Excel (hanya untuk tombol ekspor), Visual Studio 2017

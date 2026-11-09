@@ -1,0 +1,13 @@
+scenario 1: PASS (135 lines)
+scenario 2: PASS (224 lines)
+scenario 3: PASS (48 lines)
+scenario 4: PASS (72 lines)
+scenario 5: PASS (124 lines)
+scenario 6: PASS (70 lines)
+scenario 7: PASS (88 lines)
+scenario 8: PASS (93 lines)
+scenario 9: PASS (262 lines)
+scenario 10: PASS (161 lines)
+scenario 11: PASS (90 lines)
+scenario 12: PASS (1268 lines)
+all scenarios match golden/
