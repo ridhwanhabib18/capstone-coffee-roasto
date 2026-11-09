@@ -58,7 +58,7 @@ namespace CoffeeRoasto_GUI
             this.button_StopPID = new System.Windows.Forms.Button();
             this.label_PID = new System.Windows.Forms.Label();
             this.button_StartPID = new System.Windows.Forms.Button();
-            this.pilotLamp_PIDMode = new CoffeeRoasto_GUI.PilotLamp();
+            this.pilotLamp_PIDMode = new CoffeeRoasto_GUI.UI.PilotLamp();
             this.textBox_FileName = new System.Windows.Forms.TextBox();
             this.button_bean = new System.Windows.Forms.Button();
             this.button_BrowseFile = new System.Windows.Forms.Button();
@@ -68,8 +68,8 @@ namespace CoffeeRoasto_GUI
             this.label_FileName = new System.Windows.Forms.Label();
             this.label_AutoMode = new System.Windows.Forms.Label();
             this.button_StartAutoMode = new System.Windows.Forms.Button();
-            this.pilotLamp_AutoMode = new CoffeeRoasto_GUI.PilotLamp();
-            this.pilotLamp_HeatingMode = new CoffeeRoasto_GUI.PilotLamp();
+            this.pilotLamp_AutoMode = new CoffeeRoasto_GUI.UI.PilotLamp();
+            this.pilotLamp_HeatingMode = new CoffeeRoasto_GUI.UI.PilotLamp();
             this.serialPort1 = new System.IO.Ports.SerialPort(this.components);
             this.chart_Temperature = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.label_BeanTemperature = new System.Windows.Forms.Label();
@@ -97,12 +97,12 @@ namespace CoffeeRoasto_GUI
             this.label1 = new System.Windows.Forms.Label();
             this.button_OFFMotorValve = new System.Windows.Forms.Button();
             this.button_ONMotorValve = new System.Windows.Forms.Button();
-            this.pilotLampMotorValve = new CoffeeRoasto_GUI.PilotLamp();
-            this.pilotLamp_Burner = new CoffeeRoasto_GUI.PilotLamp();
-            this.pilotLamp_RecordData = new CoffeeRoasto_GUI.PilotLamp();
-            this.pilotLamp_Cooler = new CoffeeRoasto_GUI.PilotLamp();
-            this.pilotLamp_BlowerDrum = new CoffeeRoasto_GUI.PilotLamp();
-            this.pilotLamp_MotorDrum = new CoffeeRoasto_GUI.PilotLamp();
+            this.pilotLampMotorValve = new CoffeeRoasto_GUI.UI.PilotLamp();
+            this.pilotLamp_Burner = new CoffeeRoasto_GUI.UI.PilotLamp();
+            this.pilotLamp_RecordData = new CoffeeRoasto_GUI.UI.PilotLamp();
+            this.pilotLamp_Cooler = new CoffeeRoasto_GUI.UI.PilotLamp();
+            this.pilotLamp_BlowerDrum = new CoffeeRoasto_GUI.UI.PilotLamp();
+            this.pilotLamp_MotorDrum = new CoffeeRoasto_GUI.UI.PilotLamp();
             this.groupBox_PanelConnection.SuspendLayout();
             this.groupBox_AutomaticControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.chart_Temperature)).BeginInit();
@@ -452,7 +452,6 @@ namespace CoffeeRoasto_GUI
             this.pilotLamp_AutoMode.TabIndex = 25;
             this.pilotLamp_AutoMode.Text = "pilotLamp2";
             this.pilotLamp_AutoMode.UseVisualStyleBackColor = false;
-            this.pilotLamp_AutoMode.Click += new System.EventHandler(this.pilotLamp_AutoMode_Click);
             // 
             // pilotLamp_HeatingMode
             // 
@@ -760,7 +759,6 @@ namespace CoffeeRoasto_GUI
             this.label1.Size = new System.Drawing.Size(108, 17);
             this.label1.TabIndex = 36;
             this.label1.Text = "MOTOR VALVE :";
-            this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
             // button_OFFMotorValve
             // 
@@ -771,7 +769,7 @@ namespace CoffeeRoasto_GUI
             this.button_OFFMotorValve.TabIndex = 38;
             this.button_OFFMotorValve.Text = "CLOSE";
             this.button_OFFMotorValve.UseVisualStyleBackColor = true;
-            this.button_OFFMotorValve.Click += new System.EventHandler(this.button_OFFMotorValve_Click_1);
+            this.button_OFFMotorValve.Click += new System.EventHandler(this.button_OFFMotorValve_Click);
             // 
             // button_ONMotorValve
             // 
@@ -782,7 +780,7 @@ namespace CoffeeRoasto_GUI
             this.button_ONMotorValve.TabIndex = 37;
             this.button_ONMotorValve.Text = "OPEN";
             this.button_ONMotorValve.UseVisualStyleBackColor = true;
-            this.button_ONMotorValve.Click += new System.EventHandler(this.button2_Click);
+            this.button_ONMotorValve.Click += new System.EventHandler(this.button_ONMotorValve_Click);
             // 
             // pilotLampMotorValve
             // 
@@ -793,7 +791,6 @@ namespace CoffeeRoasto_GUI
             this.pilotLampMotorValve.TabIndex = 35;
             this.pilotLampMotorValve.Text = "pilotLampMotorValve";
             this.pilotLampMotorValve.UseVisualStyleBackColor = false;
-            this.pilotLampMotorValve.Click += new System.EventHandler(this.pilotLampMotorValve_Click);
             // 
             // pilotLamp_Burner
             // 
@@ -804,7 +801,6 @@ namespace CoffeeRoasto_GUI
             this.pilotLamp_Burner.TabIndex = 25;
             this.pilotLamp_Burner.Text = "pilotLamp_Burner";
             this.pilotLamp_Burner.UseVisualStyleBackColor = false;
-            this.pilotLamp_Burner.Click += new System.EventHandler(this.pilotLamp_Burner_Click);
             // 
             // pilotLamp_RecordData
             // 
@@ -825,7 +821,6 @@ namespace CoffeeRoasto_GUI
             this.pilotLamp_Cooler.TabIndex = 12;
             this.pilotLamp_Cooler.Text = "pilotLamp_Cooler";
             this.pilotLamp_Cooler.UseVisualStyleBackColor = false;
-            this.pilotLamp_Cooler.Click += new System.EventHandler(this.pilotLamp_Cooler_Click);
             // 
             // pilotLamp_BlowerDrum
             // 
@@ -934,13 +929,13 @@ namespace CoffeeRoasto_GUI
         private System.Windows.Forms.Button button_StopAutoMode;
         private System.Windows.Forms.Button button_StartAutoMode;
         private System.Windows.Forms.Label label_AutoMode;
-        private PilotLamp pilotLamp_AutoMode;
+        private UI.PilotLamp pilotLamp_AutoMode;
         private System.Windows.Forms.Button button_StopHeatingMode;
         private System.Windows.Forms.Button button_StartHeatingMode;
         private System.Windows.Forms.Label label_HeatingMode;
-        private PilotLamp pilotLamp_HeatingMode;
+        private UI.PilotLamp pilotLamp_HeatingMode;
         private System.Windows.Forms.Label label_FileName;
-        private PilotLamp pilotLamp_RecordData;
+        private UI.PilotLamp pilotLamp_RecordData;
         private System.IO.Ports.SerialPort serialPort1;
         private System.Windows.Forms.DataVisualization.Charting.Chart chart_Temperature;
         private System.Windows.Forms.Label label_BeanTemperature;
@@ -961,28 +956,28 @@ namespace CoffeeRoasto_GUI
         private System.Windows.Forms.Label label_Burner;
         private System.Windows.Forms.Button button_ONBurner;
         private System.Windows.Forms.Button button_OFFBurner;
-        private PilotLamp pilotLamp_MotorDrum;
+        private UI.PilotLamp pilotLamp_MotorDrum;
         private System.Windows.Forms.Label label_MotorDrum;
         private System.Windows.Forms.Button button_ONMotorDrum;
         private System.Windows.Forms.Button button_OFFMotorDrum;
-        private PilotLamp pilotLamp_BlowerDrum;
+        private UI.PilotLamp pilotLamp_BlowerDrum;
         private System.Windows.Forms.Label label_BlowerDrum;
         private System.Windows.Forms.Button button_ONBlowerDrum;
         private System.Windows.Forms.Button button_OFFBlowerDrum;
-        private PilotLamp pilotLamp_Cooler;
+        private UI.PilotLamp pilotLamp_Cooler;
         private System.Windows.Forms.Label label_Cooler;
         private System.Windows.Forms.Button button_ONCooler;
         private System.Windows.Forms.Button button_OFFCooler;
-        private PilotLamp pilotLamp_Burner;
+        private UI.PilotLamp pilotLamp_Burner;
         private System.Windows.Forms.DataGridView dataGridView;
-        private PilotLamp pilotLampMotorValve;
+        private UI.PilotLamp pilotLampMotorValve;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button button_OFFMotorValve;
         private System.Windows.Forms.Button button_ONMotorValve;
         private System.Windows.Forms.Button button_StopPID;
         private System.Windows.Forms.Label label_PID;
         private System.Windows.Forms.Button button_StartPID;
-        private PilotLamp pilotLamp_PIDMode;
+        private UI.PilotLamp pilotLamp_PIDMode;
     }
 }
 

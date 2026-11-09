@@ -45,7 +45,7 @@ flowchart LR
 %% Source: diagrams/components.mmd
 flowchart TB
   subgraph pc["Windows PC"]
-    form["Form_CoffeeRoasto (Form1.cs)<br/>buttons, lamps, labels"]
+    form["Form_CoffeeRoasto (Form1.*.cs)<br/>buttons, lamps, labels"]
     chart["Temperature chart<br/>Bean, Drum, Reference series"]
     grid["DataGridView<br/>recorded data or profile sheet"]
     list["List&lt;Coffee&gt;<br/>recorded samples"]
@@ -79,15 +79,34 @@ flowchart TB
   sampler -->|"@bean A drum B ref C"| port
 ```
 
-| Part | File | Responsibility |
+The GUI is one screen (`Form_CoffeeRoasto`, split over several partial files) and a handful of small classes with one job each. Only `UI/` knows the screen, so `Hardware/` and `Profiles/` can be read and tested alone.
+
+| Folder / file | Class | Responsibility |
 | --- | --- | --- |
-| `Form_CoffeeRoasto` | `Form1.cs`, `Form1.Designer.cs` | Screen, serial I/O, parsing, chart, recording, profile sending |
-| `Coffee` | `Coffee.cs` | Row of the recording: `beantemperature`, `drumtemperature` |
-| `PilotLamp` | `PilotLamp.cs` | Round `Button` whose `BackColor` is the lamp colour (dark green = off, lime = on) |
-| `Program` | `Program.cs` | Entry point, runs `Form_CoffeeRoasto` |
-| Firmware | `Program_PID_CP.ino` | Command parser, PID, relay and servo outputs |
-| Sampling | `read_temperature.ino` | Thermocouple reading, averaging, calibration, data frame |
-| Splitting | `pisahkansuhuref.ino` | Splits a comma-separated profile line |
+| `Form1.cs` | `Form_CoffeeRoasto` | Builds the helper objects, handles incoming lines (telemetry and events) |
+| `Form1.Connection.cs` | (partial) | COM port list, connect, disconnect, enable or disable the controls |
+| `Form1.Manual.cs` | (partial) | Burner, drum motor, blower, cooler, valve buttons; manual set point |
+| `Form1.Modes.cs` | (partial) | Heating, auto and PID start/stop and their lamps |
+| `Form1.Recording.cs` | (partial) | Record start/stop, export |
+| `Form1.Profile.cs` | (partial) | Browse a profile, choose a sheet, send it |
+| `Form1.Designer.cs` | (generated) | Controls and event wiring made by the Visual Studio designer |
+| `Hardware/RoasterCommand.cs` | `RoasterCommand` | The command characters, one constant each |
+| `Hardware/RoasterLink.cs` | `RoasterLink` | Serial port: open (9600 baud), close, send, read a line |
+| `Hardware/FrameParser.cs`, `ParsedLine.cs` | `FrameParser`, `ParsedLine`, `Telemetry`, `RoasterEvent` | Turns a received line into a reading or an event (pure logic) |
+| `Profiles/ProfileReader.cs` | `ProfileReader` | Reads the `beantemperature` column of every Excel sheet |
+| `Profiles/ProfileTransmitter.cs` | `ProfileTransmitter` | Sends a profile in groups of ten, 40 s apart, on a background thread |
+| `Recording/RecordingSession.cs`, `Coffee.cs` | `RecordingSession`, `Coffee` | The samples collected while recording |
+| `Recording/ExcelExporter.cs` | `ExcelExporter` | Copies the data grid to a new Excel workbook |
+| `UI/LampBoard.cs` | `LampBoard`, `Lamp` | All pilot lamps by name: `On(...)`, `Off(...)`, `AllOff()` |
+| `UI/PilotLamp.cs` | `PilotLamp` | Round `Button`; `BackColor` is the lamp colour (dark green = off, lime = on) |
+| `UI/TemperatureChart.cs` | `TemperatureChart` | The chart and its three series |
+| `UI/RoastClock.cs` | `RoastClock` | The time axis (mm:ss since connect or mode start) |
+| `Program.cs` | `Program` | Entry point |
+| firmware `Program_PID_CP.ino` | | Command parser, PID, relay and servo outputs |
+| firmware `read_temperature.ino` | | Thermocouple reading, averaging, calibration, data frame |
+| firmware `pisahkansuhuref.ino` | | Splits a comma-separated profile line |
+
+Dependencies point one way: `Form1.*` uses `Hardware`, `Profiles`, `Recording` and `UI`; `Profiles` uses `Hardware`. `Hardware`, `Profiles` and `Recording` do not reference the form.
 
 ## 4. Runtime view
 
@@ -108,7 +127,7 @@ sequenceDiagram
   end
   Note over FW: after 4 samples: average, calibrate, 0.25 C dead band
   FW-->>GUI: @37.11A38.67B0C
-  GUI->>GUI: parse, divide by 100, BeginInvoke(Show_DataTempChart)
+  GUI->>GUI: parse, divide by 100, BeginInvoke(HandleLine)
   GUI-->>Op: labels and chart updated
   opt recording is on
     GUI->>GUI: add Coffee(bean, drum) to the list
@@ -190,7 +209,7 @@ There is no database and no network access.
 
 ## 8. Threading
 
-The serial `DataReceived` event runs on a pool thread and calls `Data_Parsing`. Chart and label updates are marshalled with `BeginInvoke(Show_DataTempChart)`. Profile sending runs on a `BackgroundWorker` and sleeps 40 s between groups, so the UI stays responsive. Lamp colours and message boxes set inside `Data_Parsing` for events `X`, `V`, `Y`, `Z` are touched from the serial thread (see known limitations).
+The serial `DataReceived` event runs on a pool thread and calls `RoasterLink.TryReadLine`; the line is then handed to `HandleLine` on the UI thread with `BeginInvoke`. Profile sending runs on a `BackgroundWorker` and sleeps 40 s between groups, so the UI stays responsive. Parsing results, lamps, labels, the chart and message boxes are all handled on the UI thread.
 
 ## 9. Build & distribution
 
@@ -206,10 +225,10 @@ These are the points where the code and the intent differ. They are listed so no
 | 2 | GUI parsing | `Convert.ToDouble(...) / 100` depends on the PC culture | Wrong values on an English-culture PC |
 | 3 | Auto mode `m` | The GUI sends `m` but the firmware has no handler | AUTO MODE ON does nothing useful; use PID MODE |
 | 4 | Serial framing | GUI `Write("n")` has no newline, firmware waits for `\n` | Commands arrive after the 1 s `readStringUntil` timeout |
-| 5 | Threading | `Data_Parsing` changes lamps and shows `MessageBox` on the serial thread | Can raise a cross-thread error |
-| 6 | Burner ON button | `button_ONBurner_Click` writes without the `IsOpen` check | Exception if the cable is pulled |
+| 5 | Threading | ~~`Data_Parsing` changed lamps on the serial thread~~ **Fixed**: lines are handled on the UI thread | none |
+| 6 | Burner ON button | ~~wrote without the `IsOpen` check~~ **Fixed**: every command goes through `RoasterLink.Send` | none |
 | 7 | Heating OFF | `button_StopHeatingMode_Click` shows "Roasting Selesai" before sending `s` | Misleading message |
 | 8 | Profile sending | Blocks 40 s between groups and cannot be cancelled from the UI | Must press OFF (`s`) to abort |
 | 9 | `moveServo.ino` | Does not compile | Not used by the firmware |
 | 10 | Repository | `bin/`, `obj/`, `.vs/`, `packages/`, `Release.rar` and a signing key are in the tree | Large repository; keep out of version control |
-| 11 | Export | `Excel Interop` needs Excel installed; last grid row is skipped | Fails on a PC without Excel |
+| 11 | Export | `Excel Interop` needs Excel installed (the skipped last row is **fixed**) | Fails on a PC without Excel |

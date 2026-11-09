@@ -12,7 +12,7 @@ sequenceDiagram
   end
   Note over FW: after 4 samples: average, calibrate, 0.25 C dead band
   FW-->>GUI: @37.11A38.67B0C
-  GUI->>GUI: parse, divide by 100, BeginInvoke(Show_DataTempChart)
+  GUI->>GUI: parse, divide by 100, BeginInvoke(HandleLine)
   GUI-->>Op: labels and chart updated
   opt recording is on
     GUI->>GUI: add Coffee(bean, drum) to the list

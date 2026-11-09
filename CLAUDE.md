@@ -25,8 +25,13 @@ GUI: C#, .NET Framework 4.7.2, Windows Forms, `System.Windows.Forms.DataVisualiz
 Firmware: Arduino (AVR), `max6675` and `Servo` libraries, 9600 baud.
 
 ## Architecture rules
-- `Form1.cs` (`Form_CoffeeRoasto`) is the only screen. Hardware I/O goes through `serialPort1`; UI updates from the
-  serial thread must use `BeginInvoke`.
+- `Form_CoffeeRoasto` is the only screen, split into `Form1.cs` (setup, incoming data) and `Form1.<Area>.cs` partials
+  (Connection, Manual, Modes, Recording, Profile). Handlers stay thin: send a command, set lamps.
+- Folders: `Hardware/` (serial link, commands, frame parser), `Profiles/` (Excel profile in, transmitter), `Recording/`
+  (samples, Excel export), `UI/` (lamps, chart, clock). `Hardware`, `Profiles` and `Recording` never reference the form.
+- All serial I/O goes through `RoasterLink`; the serial thread only reads a line and hands it to the UI thread with
+  `BeginInvoke`. Command characters live in `RoasterCommand`, never as string literals in handlers.
+- New `.cs` files must be added to `CoffeeRoasto_GUI.csproj` (old-style project, no globbing).
 - Every button maps to one protocol character (see the protocol document); no hidden commands.
 - The PID loop runs on the Arduino, not in the GUI. The GUI only supplies set points and shows state (ADR-002).
 - Incoming frames are `@<bean>A<drum>B<reference>C\n`; status letters `X`, `V`, `Y`, `Z` are single-line events.

@@ -25,15 +25,34 @@ Operator memakai GUI; GUI berbicara serial 9600 baud dengan firmware; firmware m
 
 ## 3. Komponen
 
-| Bagian | File | Tanggung jawab |
+GUI adalah satu layar (`Form_CoffeeRoasto`, dipecah menjadi beberapa file partial) ditambah beberapa kelas kecil dengan satu tugas masing-masing. Hanya `UI/` yang mengenal layar, sehingga `Hardware/` dan `Profiles/` bisa dibaca dan diuji sendiri.
+
+| Folder / file | Kelas | Tanggung jawab |
 | --- | --- | --- |
-| `Form_CoffeeRoasto` | `Form1.cs`, `Form1.Designer.cs` | Layar, I/O serial, parsing, grafik, perekaman, pengiriman profil |
-| `Coffee` | `Coffee.cs` | Baris rekaman: `beantemperature`, `drumtemperature` |
-| `PilotLamp` | `PilotLamp.cs` | `Button` bulat yang `BackColor`-nya jadi warna lampu (hijau tua = mati, lime = hidup) |
-| `Program` | `Program.cs` | Titik masuk, menjalankan `Form_CoffeeRoasto` |
-| Firmware | `Program_PID_CP.ino` | Parser perintah, PID, output relay dan servo |
-| Sampling | `read_temperature.ino` | Pembacaan termokopel, rata-rata, kalibrasi, frame data |
-| Pemecah | `pisahkansuhuref.ino` | Memecah baris profil dipisah koma |
+| `Form1.cs` | `Form_CoffeeRoasto` | Membuat objek bantu, menangani baris masuk (telemetri dan kejadian) |
+| `Form1.Connection.cs` | (partial) | Daftar port COM, connect, disconnect, mengaktifkan atau menonaktifkan kontrol |
+| `Form1.Manual.cs` | (partial) | Tombol burner, motor drum, blower, cooler, valve; set point manual |
+| `Form1.Modes.cs` | (partial) | Start/stop heating, auto, dan PID beserta lampunya |
+| `Form1.Recording.cs` | (partial) | Start/stop perekaman, ekspor |
+| `Form1.Profile.cs` | (partial) | Memilih profil, memilih sheet, mengirimnya |
+| `Form1.Designer.cs` | (dibuat otomatis) | Kontrol dan event dari designer Visual Studio |
+| `Hardware/RoasterCommand.cs` | `RoasterCommand` | Karakter perintah, satu konstanta untuk tiap perintah |
+| `Hardware/RoasterLink.cs` | `RoasterLink` | Port serial: buka (9600 baud), tutup, kirim, baca satu baris |
+| `Hardware/FrameParser.cs`, `ParsedLine.cs` | `FrameParser`, `ParsedLine`, `Telemetry`, `RoasterEvent` | Mengubah baris yang diterima menjadi pembacaan atau kejadian (logika murni) |
+| `Profiles/ProfileReader.cs` | `ProfileReader` | Membaca kolom `beantemperature` dari tiap sheet Excel |
+| `Profiles/ProfileTransmitter.cs` | `ProfileTransmitter` | Mengirim profil per sepuluh nilai, berjarak 40 detik, di thread latar |
+| `Recording/RecordingSession.cs`, `Coffee.cs` | `RecordingSession`, `Coffee` | Sampel yang dikumpulkan saat merekam |
+| `Recording/ExcelExporter.cs` | `ExcelExporter` | Menyalin data grid ke workbook Excel baru |
+| `UI/LampBoard.cs` | `LampBoard`, `Lamp` | Semua lampu indikator berdasarkan nama: `On(...)`, `Off(...)`, `AllOff()` |
+| `UI/PilotLamp.cs` | `PilotLamp` | `Button` bulat; `BackColor` adalah warna lampu (hijau tua = mati, lime = hidup) |
+| `UI/TemperatureChart.cs` | `TemperatureChart` | Grafik dan ketiga serinya |
+| `UI/RoastClock.cs` | `RoastClock` | Sumbu waktu (mm:ss sejak connect atau mode dimulai) |
+| `Program.cs` | `Program` | Titik masuk |
+| firmware `Program_PID_CP.ino` | | Parser perintah, PID, output relay dan servo |
+| firmware `read_temperature.ino` | | Pembacaan termokopel, rata-rata, kalibrasi, frame data |
+| firmware `pisahkansuhuref.ino` | | Memecah baris profil dipisah koma |
+
+Ketergantungan searah: `Form1.*` memakai `Hardware`, `Profiles`, `Recording`, dan `UI`; `Profiles` memakai `Hardware`. `Hardware`, `Profiles`, dan `Recording` tidak merujuk ke form.
 
 (Diagram: `diagrams/components.mmd`.)
 
@@ -69,7 +88,7 @@ Tidak ada database dan tidak ada akses jaringan.
 
 ## 8. Threading
 
-Event serial `DataReceived` berjalan di thread pool dan memanggil `Data_Parsing`. Pembaruan grafik dan label dialihkan dengan `BeginInvoke(Show_DataTempChart)`. Pengiriman profil berjalan di `BackgroundWorker` dan tidur 40 detik di antara kelompok, jadi UI tetap responsif. Warna lampu dan message box yang diatur di `Data_Parsing` untuk kejadian `X`, `V`, `Y`, `Z` disentuh dari thread serial (lihat keterbatasan).
+Event serial `DataReceived` berjalan di thread pool dan memanggil `RoasterLink.TryReadLine`; barisnya lalu diserahkan ke `HandleLine` di thread UI dengan `BeginInvoke`. Pengiriman profil berjalan di `BackgroundWorker` dan tidur 40 detik di antara kelompok, jadi UI tetap responsif. Hasil parsing, lampu, label, grafik, dan message box semuanya ditangani di thread UI.
 
 ## 9. Build & distribusi
 
@@ -85,10 +104,10 @@ Titik-titik di mana kode dan maksudnya berbeda. Daftar ini agar tidak ada yang t
 | 2 | Parsing GUI | `Convert.ToDouble(...) / 100` bergantung pada lokal PC | Nilai salah di PC berlokal Inggris |
 | 3 | Auto mode `m` | GUI mengirim `m` tetapi firmware tidak punya handler | AUTO MODE ON tidak berguna; pakai PID MODE |
 | 4 | Framing serial | GUI `Write("n")` tanpa newline, firmware menunggu `\n` | Perintah tiba setelah timeout `readStringUntil` 1 detik |
-| 5 | Threading | `Data_Parsing` mengubah lampu dan menampilkan `MessageBox` di thread serial | Bisa memicu error lintas-thread |
-| 6 | Tombol Burner ON | `button_ONBurner_Click` menulis tanpa cek `IsOpen` | Exception bila kabel dicabut |
+| 5 | Threading | ~~`Data_Parsing` mengubah lampu di thread serial~~ **Diperbaiki**: baris ditangani di thread UI | tidak ada |
+| 6 | Tombol Burner ON | ~~menulis tanpa cek `IsOpen`~~ **Diperbaiki**: semua perintah lewat `RoasterLink.Send` | tidak ada |
 | 7 | Heating OFF | `button_StopHeatingMode_Click` menampilkan "Roasting Selesai" sebelum mengirim `s` | Pesan menyesatkan |
 | 8 | Pengiriman profil | Memblokir 40 detik antar kelompok dan tidak bisa dibatalkan dari UI | Harus menekan OFF (`s`) untuk membatalkan |
 | 9 | `moveServo.ino` | Tidak bisa dikompilasi | Tidak dipakai firmware |
 | 10 | Repositori | `bin/`, `obj/`, `.vs/`, `packages/`, `Release.rar`, dan kunci penandatanganan ada di pohon | Repositori besar; jangan masukkan ke version control |
-| 11 | Ekspor | `Excel Interop` butuh Excel terpasang; baris terakhir grid dilewati | Gagal di PC tanpa Excel |
+| 11 | Ekspor | `Excel Interop` butuh Excel terpasang (baris terakhir yang terlewat sudah **diperbaiki**) | Gagal di PC tanpa Excel |
