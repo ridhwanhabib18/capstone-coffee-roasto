@@ -66,7 +66,7 @@ Idle → Manual (perintah tunggal) · Idle/Manual → Heating (`h`) → Idle set
 
 - **Sampling:** tiap 1 detik satu pembacaan per sensor; empat pembacaan dirata-rata, jadi frame baru muncul tiap ~4 detik.
 - **Kalibrasi:** regresi linear per sensor, lalu dead band 0,25 °C (lihat [panduan hardware](hardware.md)).
-- **PID:** `e = set point − biji`; `PID = 21,095·e + 0,2·(e + e_prev) + (e − e_prev)`, dibatasi 0–40. Angka yang sama menggerakkan valve (`servo = 40 − PID`) dan relay kompor (hidup di 40, mati di 0).
+- **PID:** `e = set point − biji`; `PID = 21,095·e + 0,2·(e + e_prev) + (e − e_prev)`, dibatasi 0–40. Angka yang sama menggerakkan valve (`servo = 40 − PID`, jadi error besar membuka valve gas ke 0° dan tanpa error menutupnya di 40°) dan relay kompor (hidup di 40, mati di 0).
 - **Set point:** 150 °C sampai profil tiba, lalu satu nilai per sampel, lalu `0` untuk mengakhiri.
 - **Batas:** biji ≥ 250 °C menghentikan mode PID; mode heating berjalan 600 detik.
 

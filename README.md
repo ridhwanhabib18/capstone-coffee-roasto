@@ -87,11 +87,18 @@ Everything that can be checked without a roaster runs with `./check.ps1` (restor
 The PID runs on the Arduino, not in the app (ADR-002). Code: `firmware/Program_PID_CP/` (`Pid.ino`, `PidMode.ino`, `Actuators.ino`, `ReferenceProfile.h`, `Config.h`).
 
 ### Control loop
-```text
-Reference profile (Excel -> GUI) -> set point (SP) -+
-                                                    v
-Bean thermocouple -> 4-sample average -> PV ---> e = SP - PV -> PID -> clamp 0..40 -+-> valve servo = 40 - PID
- (regression-corrected, dead band 0.25)                                             +-> burner relay (on/off)
+```mermaid
+flowchart LR
+  profile["Reference profile<br/>Excel → GUI, 10 values per line"] --> sp["Set point (SP)"]
+  sp --> err(("e = SP − PV"))
+  err --> pid["PID = 22.295 · e<br/>limited to 0..40"]
+  pid --> valve["Gas valve servo<br/>angle = 40 − PID"]
+  pid --> relay["Burner relay<br/>ON at PID = 40, OFF at PID = 0"]
+  valve --> roaster["Drum roaster"]
+  relay --> roaster
+  roaster --> sensor["Bean thermocouple<br/>MAX6675"]
+  sensor --> pv["Process variable (PV)<br/>4-sample average, regression, dead band 0.25"]
+  pv -->|feedback every ~4 s| err
 ```
 
 | Element | In this project |
@@ -99,7 +106,7 @@ Bean thermocouple -> 4-sample average -> PV ---> e = SP - PV -> PID -> clamp 0..
 | Process | Drum coffee roaster with a gas burner |
 | Process variable (PV) | Bean temperature, MAX6675 K-type thermocouple |
 | Set point (SP) | The reference profile from Excel, sent by the GUI ten values at a time; 150 °C before a profile arrives; 0 ends the roast |
-| Actuators | Valve servo (0° to 40°) and the burner relay (active LOW) |
+| Actuators | Gas valve servo (0° open, 40° closed) and the burner relay (active LOW) |
 | Sampling period | One update every ~4 s (1 s samples, 4 averaged) |
 
 ### The calculation (`computePid`)
@@ -116,9 +123,24 @@ The gains come from a MATLAB simulation. `e_prev` is a constant 0 and `KD` (30 i
 with golden traces.
 
 ### From the PID value to the actuators
-- **Valve:** `servo = 40 - PID`. A large error gives PID = 40 and the servo at 0°; an error of 0 or less gives 40°. (Which angle is physically open or closed is being confirmed on the machine; the code names 0° `VALVE_OPEN_ANGLE`.)
+- **Valve:** `servo = 40 - PID`. A large error gives PID = 40 and the valve at 0° (open, gas flows); an error of 0 or less gives 40° (closed). Confirmed on the machine.
 - **Burner relay:** switched on only when PID reaches 40 (error of about 1.79 °C or more) and off when PID reaches 0 (bean at or above the set point). In between it keeps its state and only the valve moves, which stops the relay from chattering.
 - **In practice:** a proportional band of only about 1.8 °C, so the loop behaves close to on/off with a little modulation near the set point.
+
+![PID characteristic: PID output and valve angle against the error, and the burner relay hysteresis](docs/assets/pid/pid-characteristic.svg)
+
+The chart is drawn from the constants in `Config.h` by `tools/pid-charts/make_charts.py` (`python tools/pid-charts/make_charts.py`); rerun it if the gains change. It shows the formula, not a measured roast.
+
+```mermaid
+stateDiagram-v2
+  [*] --> BurnerOff
+  BurnerOff --> BurnerOn: PID = 40 (e ≥ 1.79 °C), event Y
+  BurnerOn --> BurnerOff: PID ≤ 0 (e ≤ 0), event Z
+  note right of BurnerOn
+    Between the two limits the state is kept
+    and only the valve angle changes.
+  end note
+```
 
 ### Set point handling
 `ReferenceProfile` keeps two buffers (*pending* and *active*). One set point is used per averaged reading (~4 s), so ten values

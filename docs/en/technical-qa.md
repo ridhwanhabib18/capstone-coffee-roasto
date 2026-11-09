@@ -16,7 +16,7 @@ Two K-type thermocouples through MAX6675 amplifiers (12-bit, 0.25 °C steps). Ea
 
 ## 4. What do the PID values mean?
 
-Kp = 21.095, Ki = 0.2, Kd = 30 come from a MATLAB simulation of the roaster. The output is clamped to 0–40 because that is the servo range of the gas valve in degrees: 0° is open, 40° is closed. A large error (PID = 40) closes the valve and turns the burner relay on; no error (PID = 0) leaves the valve open and the burner off. In the current firmware the previous-error variable is never updated and Kd is unused, so the loop is closer to P with a small I term (system design, known limitation 1).
+Kp = 21.095, Ki = 0.2, Kd = 30 come from a MATLAB simulation of the roaster. The output is clamped to 0–40 because that is the servo range of the gas valve in degrees: 0° is open, 40° is closed. The servo angle is `40 − PID`: a large error (PID = 40) puts the valve at 0° (open, gas flows) and turns the burner relay on; no error (PID = 0) puts it at 40° (closed) and turns the burner off. In the current firmware the previous-error variable is never updated and Kd is unused, so the loop is closer to P with a small I term (system design, known limitation 1).
 
 ## 5. Why is the profile sent ten values at a time every 40 seconds?
 

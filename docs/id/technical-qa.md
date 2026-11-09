@@ -16,7 +16,7 @@ Dua termokopel tipe K lewat penguat MAX6675 (12-bit, langkah 0,25 °C). Tiap pem
 
 ## 4. Apa arti nilai PID?
 
-Kp = 21,095, Ki = 0,2, Kd = 30 berasal dari simulasi MATLAB mesin. Keluaran dibatasi 0–40 karena itu rentang servo valve gas dalam derajat: 0° terbuka, 40° tertutup. Error besar (PID = 40) menutup valve dan menyalakan relay kompor; tanpa error (PID = 0) valve terbuka dan kompor mati. Di firmware saat ini variabel error sebelumnya tidak pernah diperbarui dan Kd tidak dipakai, sehingga loop lebih mirip P dengan suku I kecil (desain sistem, keterbatasan 1).
+Kp = 21,095, Ki = 0,2, Kd = 30 berasal dari simulasi MATLAB mesin. Keluaran dibatasi 0–40 karena itu rentang servo valve gas dalam derajat: 0° terbuka, 40° tertutup. Sudut servo adalah `40 − PID`: error besar (PID = 40) membuat valve di 0° (terbuka, gas mengalir) dan menyalakan relay kompor; tanpa error (PID = 0) valve di 40° (tertutup) dan kompor mati. Di firmware saat ini variabel error sebelumnya tidak pernah diperbarui dan Kd tidak dipakai, sehingga loop lebih mirip P dengan suku I kecil (desain sistem, keterbatasan 1).
 
 ## 5. Mengapa profil dikirim sepuluh nilai tiap 40 detik?
 

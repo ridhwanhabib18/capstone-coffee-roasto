@@ -87,11 +87,18 @@ Semua yang bisa diperiksa tanpa mesin berjalan dengan `./check.ps1` (restore, bu
 PID berjalan di Arduino, bukan di aplikasi (ADR-002). Kode: `firmware/Program_PID_CP/` (`Pid.ino`, `PidMode.ino`, `Actuators.ino`, `ReferenceProfile.h`, `Config.h`).
 
 ### Loop kendali
-```text
-Profil referensi (Excel -> GUI) -> set point (SP) -+
-                                                   v
-Termokopel biji -> rata-rata 4 sampel -> PV ---> e = SP - PV -> PID -> batas 0..40 -+-> servo katup = 40 - PID
- (koreksi regresi, dead band 0,25)                                                  +-> relay burner (on/off)
+```mermaid
+flowchart LR
+  profile["Profil referensi<br/>Excel → GUI, 10 nilai per baris"] --> sp["Set point (SP)"]
+  sp --> err(("e = SP − PV"))
+  err --> pid["PID = 22,295 · e<br/>dibatasi 0..40"]
+  pid --> valve["Servo katup gas<br/>sudut = 40 − PID"]
+  pid --> relay["Relay burner<br/>ON saat PID = 40, OFF saat PID = 0"]
+  valve --> roaster["Roaster drum"]
+  relay --> roaster
+  roaster --> sensor["Termokopel biji<br/>MAX6675"]
+  sensor --> pv["Process variable (PV)<br/>rata-rata 4 sampel, regresi, dead band 0,25"]
+  pv -->|umpan balik tiap ~4 detik| err
 ```
 
 | Elemen | Di proyek ini |
@@ -99,7 +106,7 @@ Termokopel biji -> rata-rata 4 sampel -> PV ---> e = SP - PV -> PID -> batas 0..
 | Proses | Roaster kopi tipe drum dengan burner gas |
 | Process variable (PV) | Suhu biji, termokopel tipe K lewat MAX6675 |
 | Set point (SP) | Profil referensi dari Excel, dikirim GUI sepuluh nilai sekali kirim; 150 °C sebelum profil tiba; 0 mengakhiri roasting |
-| Aktuator | Servo katup (0° sampai 40°) dan relay burner (active LOW) |
+| Aktuator | Servo katup gas (0° terbuka, 40° tertutup) dan relay burner (active LOW) |
 | Periode sampling | Satu pembaruan tiap ~4 detik (sampel 1 detik, 4 dirata-rata) |
 
 ### Perhitungan (`computePid`)
@@ -116,9 +123,24 @@ sesungguhnya (desain sistem, keterbatasan 1). Kode sengaja dipertahankan persis 
 dicek terhadap sketsa asli dengan golden trace.
 
 ### Dari nilai PID ke aktuator
-- **Katup:** `servo = 40 - PID`. Error besar menghasilkan PID = 40 dan servo di 0°; error 0 atau negatif menghasilkan 40°. (Sudut mana yang secara fisik terbuka atau tertutup sedang dikonfirmasi di mesin; kode menamai 0° `VALVE_OPEN_ANGLE`.)
+- **Katup:** `servo = 40 - PID`. Error besar menghasilkan PID = 40 dan katup di 0° (terbuka, gas mengalir); error 0 atau negatif menghasilkan 40° (tertutup). Sudah dikonfirmasi di mesin.
 - **Relay burner:** menyala hanya saat PID mencapai 40 (error sekitar 1,79 °C atau lebih) dan mati saat PID mencapai 0 (suhu biji sama dengan atau di atas set point). Di antaranya status relay dipertahankan dan hanya katup yang bergerak, sehingga relay tidak bolak-balik (chattering).
 - **Praktisnya:** pita proporsional hanya sekitar 1,8 °C, jadi loop berperilaku mendekati on/off dengan sedikit modulasi di dekat set point.
+
+![Karakteristik PID: keluaran PID dan sudut katup terhadap error, serta histeresis relay burner](docs/assets/pid/pid-characteristic.svg)
+
+Grafik digambar dari konstanta di `Config.h` oleh `tools/pid-charts/make_charts.py` (`python tools/pid-charts/make_charts.py`); jalankan ulang bila gain berubah. Grafik ini menunjukkan rumusnya, bukan hasil roasting yang terukur.
+
+```mermaid
+stateDiagram-v2
+  [*] --> BurnerMati
+  BurnerMati --> BurnerNyala: PID = 40 (e ≥ 1,79 °C), event Y
+  BurnerNyala --> BurnerMati: PID ≤ 0 (e ≤ 0), event Z
+  note right of BurnerNyala
+    Di antara kedua batas status dipertahankan
+    dan hanya sudut katup yang berubah.
+  end note
+```
 
 ### Penanganan set point
 `ReferenceProfile` memakai dua buffer (*pending* dan *active*). Satu set point dipakai per pembacaan rata-rata (~4 detik), jadi

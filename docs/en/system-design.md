@@ -195,7 +195,7 @@ stateDiagram-v2
 
 - **Sampling:** every 1 s one reading per sensor; four readings are averaged, so a new frame appears every ~4 s.
 - **Calibration:** linear regression per sensor, then a 0.25 °C dead band (see [hardware guide](hardware.md)).
-- **PID:** `e = set point − bean`; `PID = 21.095·e + 0.2·(e + e_prev) + (e − e_prev)`, clamped to 0–40. The same number drives the valve (`servo = 40 − PID`, so a large error closes the valve toward the burner) and the burner relay (on at 40, off at 0).
+- **PID:** `e = set point − bean`; `PID = 21.095·e + 0.2·(e + e_prev) + (e − e_prev)`, clamped to 0–40. The same number drives the valve (`servo = 40 − PID`, so a large error opens the gas valve toward 0° and no error closes it at 40°) and the burner relay (on at 40, off at 0).
 - **Set points:** 150 °C until a profile arrives, then one value per sample, then `0` to end.
 - **Limits:** bean ≥ 250 °C stops PID mode; heating mode runs 600 s.
 
